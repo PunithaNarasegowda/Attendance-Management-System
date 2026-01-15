@@ -1,0 +1,9 @@
+Information Gathering----
+Add infos:
+
+1. Student:
+    |__Roll No.
+    |__Name.
+    |__Course_Name
+    |__isPresent
+    |__Lec No.
