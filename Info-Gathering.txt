@@ -2,8 +2,178 @@ Information Gathering----
 Add infos:
 
 1. Student:
-    |__Roll No.
-    |__Name.
+    |__Roll No. (Primary Key)
+    |__Name
+    |__Course_ID (Foreign Key to Course)
+    |__Contact_No
+    |__Email
+
+2. Course:
+    |__Course_ID (Primary Key)
     |__Course_Name
-    |__isPresent
-    |__Lec No.
+    |__Faculty_ID (Foreign Key to Faculty)
+
+3. Faculty:
+    |__Faculty_ID (Primary Key)
+    |__Name
+    |__Department
+    |__Contact_No
+    |__Email
+
+4. Attendance:
+    |__Attendance_ID (Primary Key)
+    |__Student_Roll_No (Foreign Key to Student)
+    |__Course_ID (Foreign Key to Course)
+    |__Date
+    |__Status (Present/Absent)
+    |__Lecture_No
+
+ER Diagram Description:
+
+Entities:
+- Student (Roll No. (PK), Name, Contact_No, Email)
+- Course (Course_ID (PK), Course_Name)
+- Faculty (Faculty_ID (PK), Name, Department, Contact_No, Email)
+- Attendance (Attendance_ID (PK), Date, Status, Lecture_No)
+
+Relationships:
+- Student takes Course: Many-to-Many relationship, resolved using the Attendance table.
+- Course is taught by Faculty: Many-to-One relationship (resolved by Faculty_ID in Course entity)
+- Student has Attendance: One-to-Many relationship (resolved by Student_Roll_No in Attendance entity)
+- Course has Attendance: One-to-Many relationship (resolved by Course_ID in Attendance entity)
+
+Foreign Keys:
+- Student.Course_ID references Course.Course_ID
+- Course.Faculty_ID references Faculty.Faculty_ID
+- Attendance.Student_Roll_No references Student.Roll_No
+- Attendance.Course_ID references Course.Course_ID
+
+Table Schema:
+
+1. Student (Roll_No VARCHAR(255) PRIMARY KEY, Name VARCHAR(255), Course_ID INT, Contact_No VARCHAR(20), Email VARCHAR(255), FOREIGN KEY (Course_ID) REFERENCES Course(Course_ID))
+
+2. Course (Course_ID INT PRIMARY KEY, Course_Name VARCHAR(255), Faculty_ID INT, FOREIGN KEY (Faculty_ID) REFERENCES Faculty(Faculty_ID))
+
+3. Faculty (Faculty_ID INT PRIMARY KEY, Name VARCHAR(255), Department VARCHAR(255), Contact_No VARCHAR(20), Email VARCHAR(255))
+
+4. Attendance (Attendance_ID INT PRIMARY KEY, Student_Roll_No VARCHAR(255), Course_ID INT, Date DATE, Status VARCHAR(10), Lecture_No INT, FOREIGN KEY (Student_Roll_No) REFERENCES Student(Roll_No), FOREIGN KEY (Course_ID) REFERENCES Course(Course_ID))
+
+Normalization:
+The current database schema is designed to be in 3rd Normal Form (3NF).
+- Each table has a primary key.
+- All non-key attributes are fully functionally dependent on the primary key (1NF and 2NF).
+- There are no transitive dependencies (3NF), meaning no non-key attribute is dependent on another non-key attribute.
+
+Procedures:
+
+1. Add_Student:
+   CREATE PROCEDURE Add_Student (
+       @Roll_No VARCHAR(255),
+       @Name VARCHAR(255),
+       @Course_ID INT,
+       @Contact_No VARCHAR(20),
+       @Email VARCHAR(255)
+   )
+   AS
+   BEGIN
+       INSERT INTO Student (Roll_No, Name, Course_ID, Contact_No, Email)
+       VALUES (@Roll_No, @Name, @Course_ID, @Contact_No, @Email);
+   END;
+
+2. Record_Attendance:
+   CREATE PROCEDURE Record_Attendance (
+       @Student_Roll_No VARCHAR(255),
+       @Course_ID INT,
+       @Date DATE,
+       @Status VARCHAR(10),
+       @Lecture_No INT
+   )
+   AS
+   BEGIN
+       INSERT INTO Attendance (Student_Roll_No, Course_ID, Date, Status, Lecture_No)
+       VALUES (@Student_Roll_No, @Course_ID, @Date, @Status, @Lecture_No);
+   END;
+
+3. Get_Student_Attendance:
+   CREATE PROCEDURE Get_Student_Attendance (
+       @Roll_No VARCHAR(255),
+       @Course_ID INT
+   )
+   AS
+   BEGIN
+       SELECT s.Name, c.Course_Name, a.Date, a.Status, a.Lecture_No
+       FROM Student s
+       JOIN Attendance a ON s.Roll_No = a.Student_Roll_No
+       JOIN Course c ON a.Course_ID = c.Course_ID
+       WHERE s.Roll_No = @Roll_No AND c.Course_ID = @Course_ID;
+   END;
+
+Queries:
+
+1. Get all students enrolled in a specific course:
+   SELECT s.Roll_No, s.Name, s.Email
+   FROM Student s
+   WHERE s.Course_ID = [CourseID];
+
+2. Get the attendance record for a specific student in a specific course:
+   SELECT a.Date, a.Status, a.Lecture_No
+   FROM Attendance a
+   WHERE a.Student_Roll_No = '[RollNo]' AND a.Course_ID = [CourseID];
+
+3. Get the total number of present and absent days for a student in a course:
+   SELECT
+       SUM(CASE WHEN Status = 'Present' THEN 1 ELSE 0 END) AS TotalPresent,
+       SUM(CASE WHEN Status = 'Absent' THEN 1 ELSE 0 END) AS TotalAbsent
+   FROM Attendance
+   WHERE Student_Roll_No = '[RollNo]' AND Course_ID = [CourseID];
+
+4. Get all courses taught by a specific faculty member:
+   SELECT c.Course_ID, c.Course_Name
+   FROM Course c
+   JOIN Faculty f ON c.Faculty_ID = f.Faculty_ID
+   WHERE f.Name = '[FacultyName]';
+
+User Interfaces:
+
+1. Student Login Page:
+   - Fields: Roll Number, Password
+   - Functionality: Authenticates students to access their attendance records.
+
+2. Faculty Login Page:
+   - Fields: Faculty ID, Password
+   - Functionality: Authenticates faculty members to mark attendance and view course details.
+
+3. Student Dashboard:
+   - Displays: Student's name, enrolled courses, and attendance summary for each course.
+   - Functionality: Allows students to view their attendance history.
+
+4. Faculty Dashboard:
+   - Displays: Faculty's name, department, and list of courses taught.
+   - Functionality: Allows faculty to select a course to mark attendance or view attendance reports.
+
+5. Mark Attendance Page (for Faculty):
+   - Fields: Date, Lecture Number, List of Students (with Present/Absent options)
+   - Functionality: Enables faculty to mark attendance for students in a selected course.
+
+6. View Attendance Report Page (for Faculty):
+   - Fields: Course Selection, Date Range Selection
+   - Displays: Detailed attendance report for a selected course, including student-wise present/absent counts.
+   - Functionality: Provides faculty with tools to generate and view attendance reports.
+
+Reports:
+
+1. Student Attendance Report:
+   - Content: Shows individual student attendance for a selected course over a specified period.
+   - Details: Includes date, lecture number, and attendance status (present/absent).
+
+2. Course Attendance Summary Report:
+   - Content: Provides an overview of attendance for all students in a particular course.
+   - Details: Summarizes total present/absent days for each student in the course.
+
+3. Faculty Workload Report:
+   - Content: Lists all courses taught by a specific faculty member.
+   - Details: Includes course names and relevant details.
+
+4. Overall Attendance Statistics:
+   - Content: High-level statistics on attendance across all courses or specific departments.
+   - Details: Percentage of present students, most missed lectures, etc.
