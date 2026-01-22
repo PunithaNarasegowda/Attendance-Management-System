@@ -1,0 +1,59 @@
+<!-- Information Gathering----
+Add infos:
+
+1. Student:
+    |__Roll No. (Primary Key)
+    |__Name
+    |__Course_ID (Foreign Key to Course)
+    |__Contact_No
+    |__Email
+
+2. Course:
+    |__Course_ID (Primary Key)
+    |__Course_Name
+    |__Faculty_ID (Foreign Key to Faculty)
+
+3. Faculty:
+    |__Faculty_ID (Primary Key)
+    |__Name
+    |__Department
+    |__Contact_No
+    |__Email
+
+4. Attendance:
+    |__Attendance_ID (Primary Key)
+    |__Student_Roll_No (Foreign Key to Student)
+    |__Course_ID (Foreign Key to Course)
+    |__Date
+    |__Status (Present/Absent)
+    |__Lecture_No
+
+ER Diagram Description:
+
+Entities:
+- Student (Roll No. (PK), Name, Contact_No, Email)
+- Course (Course_ID (PK), Course_Name)
+- Faculty (Faculty_ID (PK), Name, Department, Contact_No, Email)
+- Attendance (Attendance_ID (PK), Date, Status, Lecture_No)
+
+Relationships:
+- Student takes Course: Many-to-Many relationship, resolved using the Attendance table.
+- Course is taught by Faculty: Many-to-One relationship (resolved by Faculty_ID in Course entity)
+- Student has Attendance: One-to-Many relationship (resolved by Student_Roll_No in Attendance entity)
+- Course has Attendance: One-to-Many relationship (resolved by Course_ID in Attendance entity)
+
+Foreign Keys:
+- Student.Course_ID references Course.Course_ID
+- Course.Faculty_ID references Faculty.Faculty_ID
+- Attendance.Student_Roll_No references Student.Roll_No
+- Attendance.Course_ID references Course.Course_ID
+
+Table Schema:
+
+1. Student (Roll_No VARCHAR(255) PRIMARY KEY, Name VARCHAR(255), Course_ID INT, Contact_No VARCHAR(20), Email VARCHAR(255), FOREIGN KEY (Course_ID) REFERENCES Course(Course_ID))
+
+2. Course (Course_ID INT PRIMARY KEY, Course_Name VARCHAR(255), Faculty_ID INT, FOREIGN KEY (Faculty_ID) REFERENCES Faculty(Faculty_ID))
+
+3. Faculty (Faculty_ID INT PRIMARY KEY, Name VARCHAR(255), Department VARCHAR(255), Contact_No VARCHAR(20), Email VARCHAR(255))
+
+4. Attendance (Attendance_ID INT PRIMARY KEY, Student_Roll_No VARCHAR(255), Course_ID INT, Date DATE, Status VARCHAR(10), Lecture_No INT, FOREIGN KEY (Student_Roll_No) REFERENCES Student(Roll_No), FOREIGN KEY (Course_ID) REFERENCES Course(Course_ID)) -->
