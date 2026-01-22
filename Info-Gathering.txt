@@ -57,3 +57,5 @@ Table Schema:
 3. Faculty (Faculty_ID INT PRIMARY KEY, Name VARCHAR(255), Department VARCHAR(255), Contact_No VARCHAR(20), Email VARCHAR(255))
 
 4. Attendance (Attendance_ID INT PRIMARY KEY, Student_Roll_No VARCHAR(255), Course_ID INT, Date DATE, Status VARCHAR(10), Lecture_No INT, FOREIGN KEY (Student_Roll_No) REFERENCES Student(Roll_No), FOREIGN KEY (Course_ID) REFERENCES Course(Course_ID))
+//functional and non functional requirements to be added
+
