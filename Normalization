@@ -1,0 +1,66 @@
+CREATE DATABASE IF NOT EXISTS Attendance_Management;
+USE Attendance_Management;
+
+-- STUDENT TABLE
+CREATE TABLE STUDENT (
+    roll_no INT PRIMARY KEY,
+    name VARCHAR(100),
+    batch_year INT,
+    department VARCHAR(100)
+);
+
+-- COURSE TABLE
+CREATE TABLE COURSE (
+    course_id INT PRIMARY KEY,
+    course_name VARCHAR(100)
+);
+
+-- SECTION TABLE (Normalized)
+CREATE TABLE SECTION (
+    course_id INT,
+    section_name VARCHAR(50),
+    PRIMARY KEY (course_id, section_name),
+    FOREIGN KEY (course_id) REFERENCES COURSE(course_id)
+);
+
+-- FACULTY TABLE
+CREATE TABLE FACULTY (
+    faculty_id INT PRIMARY KEY,
+    name VARCHAR(100),
+    email VARCHAR(100),
+    department VARCHAR(100)
+);
+
+-- LECTURE TABLE
+CREATE TABLE LECTURE (
+    lecture_id INT PRIMARY KEY,
+    lecture_date DATE,
+    status VARCHAR(20),
+    course_id INT,
+    section_name VARCHAR(50),
+    faculty_id INT,
+    FOREIGN KEY (course_id, section_name)
+        REFERENCES SECTION(course_id, section_name),
+    FOREIGN KEY (faculty_id) REFERENCES FACULTY(faculty_id)
+);
+
+-- ATTENDANCE TABLE (Extended for Medical Certificate Handling)
+CREATE TABLE ATTENDANCE (
+    roll_no INT,
+    lecture_id INT,
+    is_present BOOLEAN,
+    medical_certificate_path VARCHAR(255),
+    medical_approved BOOLEAN DEFAULT FALSE,
+    PRIMARY KEY (roll_no, lecture_id),
+    FOREIGN KEY (roll_no) REFERENCES STUDENT(roll_no),
+    FOREIGN KEY (lecture_id) REFERENCES LECTURE(lecture_id)
+);
+
+-- ENROLLS TABLE
+CREATE TABLE ENROLLS (
+    roll_no INT,
+    course_id INT,
+    PRIMARY KEY (roll_no, course_id),
+    FOREIGN KEY (roll_no) REFERENCES STUDENT(roll_no),
+    FOREIGN KEY (course_id) REFERENCES COURSE(course_id)
+);
