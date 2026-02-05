@@ -1,3 +1,4 @@
+CREATE DATABASE IF NOT EXISTS Attendance_Management;
 USE Attendance_Management;
 CREATE TABLE STUDENT (
     roll_no INT PRIMARY KEY,
