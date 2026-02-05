@@ -36,10 +36,10 @@ CREATE TABLE LECTURE (
     lecture_date DATE,
     status VARCHAR(20),
     course_id INT,
-    section_name VARCHAR(50),
+    section_id VARCHAR(50),
     faculty_id INT,
-    FOREIGN KEY (course_id, section_name)
-        REFERENCES SECTION(course_id, section_name),
+    FOREIGN KEY (course_id, section_id)
+        REFERENCES SECTION(course_id, section_id),
     FOREIGN KEY (faculty_id) REFERENCES FACULTY(faculty_id)
 );
 
