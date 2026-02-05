@@ -17,7 +17,7 @@ CREATE TABLE COURSE (
 
 -- SECTION TABLE (Normalized)
 CREATE TABLE SECTION (    
-    section_name VARCHAR(50) PRIMARY KEY,
+    section_id VARCHAR(50) PRIMARY KEY,
     course_id INT,
     FOREIGN KEY (course_id) REFERENCES COURSE(course_id)
 );
