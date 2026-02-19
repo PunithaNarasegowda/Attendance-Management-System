@@ -1,1 +1,83 @@
 @import "tailwindcss";
+
+/* Smooth animations for interactive elements */
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-soft {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* Apply animations */
+nav {
+  animation: slideInDown 0.3s ease-out;
+}
+
+main {
+  animation: fadeIn 0.4s ease-out;
+}
+
+/* Smooth transitions for all interactive elements */
+button, a, input, select, textarea {
+  transition: all 0.2s ease-out;
+}
+
+/* Add hover glow effect for buttons */
+button:hover:not(:disabled) {
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+}
+
+.dark button:hover:not(:disabled) {
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
+}
+
+/* Table row hover effect */
+tbody tr {
+  transition: background-color 0.2s ease-out;
+}
+
+tbody tr:hover {
+  background-color: var(--accent);
+}
+
+/* Input focus effect */
+input:focus, select:focus, textarea:focus {
+  box-shadow: 0 0 0 3px rgba(3, 2, 19, 0.1);
+}
+
+.dark input:focus, .dark select:focus, .dark textarea:focus {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+}
