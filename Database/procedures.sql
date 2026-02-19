@@ -1,4 +1,4 @@
-USE Attendance_Management;
+USE attendance_management_system;
 
 -- ===================================================================
 -- STUDENT MANAGEMENT PROCEDURES
@@ -8,8 +8,8 @@ DELIMITER //
 
 -- Procedure to enroll a student in a course
 CREATE PROCEDURE sp_EnrollStudent(
-    IN p_roll_no INT,
-    IN p_course_id INT
+    IN p_roll_no VARCHAR(8),
+    IN p_course_id VARCHAR(6)
 )
 BEGIN
     INSERT INTO ENROLLS (roll_no, course_id)
@@ -18,7 +18,7 @@ END //
 
 -- Procedure to get all students enrolled in a specific course
 CREATE PROCEDURE sp_GetStudentsByCourse(
-    IN p_course_id INT
+    IN p_course_id VARCHAR(6)
 )
 BEGIN
     SELECT s.roll_no, s.name, s.batch_year, s.department
@@ -30,7 +30,7 @@ END //
 
 -- Procedure to get all courses for a specific student
 CREATE PROCEDURE sp_GetCoursesByStudent(
-    IN p_roll_no INT
+    IN p_roll_no VARCHAR(8)
 )
 BEGIN
     SELECT c.course_id, c.course_name
@@ -49,9 +49,9 @@ CREATE PROCEDURE sp_CreateLecture(
     IN p_lecture_id INT,
     IN p_lecture_date DATE,
     IN p_status VARCHAR(20),
-    IN p_course_id INT,
-    IN p_section_name VARCHAR(50),
-    IN p_faculty_id INT
+    IN p_course_id VARCHAR(6),
+    IN p_section_name VARCHAR(4),
+    IN p_faculty_id VARCHAR(10)
 )
 BEGIN
     INSERT INTO LECTURE (lecture_id, lecture_date, status, course_id, section_name, faculty_id)
@@ -60,9 +60,9 @@ END //
 
 -- Procedure to get lectures by faculty for a specific course and section
 CREATE PROCEDURE sp_GetLecturesByFaculty(
-    IN p_faculty_id INT,
-    IN p_course_id INT,
-    IN p_section_name VARCHAR(50)
+    IN p_faculty_id VARCHAR(10),
+    IN p_course_id VARCHAR(6),
+    IN p_section_name VARCHAR(4)
 )
 BEGIN
     SELECT lecture_id, lecture_date, status
@@ -89,8 +89,8 @@ END //
 
 -- Procedure to mark attendance for a student in a lecture
 CREATE PROCEDURE sp_MarkAttendance(
-    IN p_attendance_id INT,
-    IN p_roll_no INT,
+    IN p_attendance_id VARCHAR(10),
+    IN p_roll_no VARCHAR(8),
     IN p_lecture_id INT,
     IN p_is_present BOOLEAN
 )
@@ -101,7 +101,7 @@ END //
 
 -- Procedure to update attendance status
 CREATE PROCEDURE sp_UpdateAttendance(
-    IN p_roll_no INT,
+    IN p_roll_no VARCHAR(8),
     IN p_lecture_id INT,
     IN p_is_present BOOLEAN
 )
@@ -125,7 +125,7 @@ END //
 
 -- Procedure to get attendance records for a specific student
 CREATE PROCEDURE sp_GetAttendanceByStudent(
-    IN p_roll_no INT
+    IN p_roll_no VARCHAR(8)
 )
 BEGIN
     SELECT a.attendance_id, a.lecture_id, l.lecture_date, l.course_id, 
@@ -143,8 +143,8 @@ END //
 
 -- Procedure to calculate attendance percentage for a student in a course
 CREATE PROCEDURE sp_CalculateAttendancePercentage(
-    IN p_roll_no INT,
-    IN p_course_id INT,
+    IN p_roll_no VARCHAR(8),
+    IN p_course_id VARCHAR(6),
     OUT p_total_lectures INT,
     OUT p_attended_lectures INT,
     OUT p_percentage DECIMAL(5,2)
@@ -174,8 +174,8 @@ END //
 
 -- Procedure to get attendance summary for a course section
 CREATE PROCEDURE sp_GetCourseSectionAttendanceSummary(
-    IN p_course_id INT,
-    IN p_section_name VARCHAR(50)
+    IN p_course_id VARCHAR(6),
+    IN p_section_name VARCHAR(4)
 )
 BEGIN
     SELECT 
@@ -203,7 +203,7 @@ END //
 
 -- Procedure to get courses taught by a faculty member
 CREATE PROCEDURE sp_GetCoursesByFaculty(
-    IN p_faculty_id INT
+    IN p_faculty_id VARCHAR(10)
 )
 BEGIN
     SELECT DISTINCT c.course_id, c.course_name
@@ -215,15 +215,14 @@ END //
 
 -- Procedure to get sections taught by faculty for a specific course
 CREATE PROCEDURE sp_GetSectionsByFacultyCourse(
-    IN p_faculty_id INT,
-    IN p_course_id INT
+    IN p_faculty_id VARCHAR(10),
+    IN p_course_id VARCHAR(6)
 )
 BEGIN
-    SELECT DISTINCT s.section_name, s.course_id
-    FROM SECTION s
-    INNER JOIN LECTURE l ON s.section_name = l.section_name AND s.course_id = l.course_id
+    SELECT DISTINCT l.section_name, l.course_id
+    FROM LECTURE l
     WHERE l.faculty_id = p_faculty_id AND l.course_id = p_course_id
-    ORDER BY s.section_name;
+    ORDER BY l.section_name;
 END //
 
 -- ===================================================================
@@ -232,8 +231,8 @@ END //
 
 -- Procedure to create a new section
 CREATE PROCEDURE sp_CreateSection(
-    IN p_section_name VARCHAR(50),
-    IN p_course_id INT
+    IN p_section_name VARCHAR(4),
+    IN p_course_id VARCHAR(6)
 )
 BEGIN
     INSERT INTO SECTION (section_name, course_id)
@@ -242,7 +241,7 @@ END //
 
 -- Procedure to get all sections for a course
 CREATE PROCEDURE sp_GetSectionsByCourse(
-    IN p_course_id INT
+    IN p_course_id VARCHAR(6)
 )
 BEGIN
     SELECT section_name, course_id
@@ -257,8 +256,8 @@ END //
 
 -- Procedure to get students with low attendance in a course
 CREATE PROCEDURE sp_GetLowAttendanceStudents(
-    IN p_course_id INT,
-    IN p_section_name VARCHAR(50),
+    IN p_course_id VARCHAR(6),
+    IN p_section_name VARCHAR(4),
     IN p_threshold DECIMAL(5,2)
 )
 BEGIN
@@ -281,7 +280,7 @@ END //
 
 -- Procedure to get attendance statistics for a faculty member
 CREATE PROCEDURE sp_GetFacultyAttendanceStats(
-    IN p_faculty_id INT
+    IN p_faculty_id VARCHAR(10)
 )
 BEGIN
     SELECT 
@@ -324,8 +323,8 @@ CREATE PROCEDURE sp_MarkAllPresent(
 )
 BEGIN
     DECLARE done INT DEFAULT FALSE;
-    DECLARE v_roll_no INT;
-    DECLARE v_attendance_id INT;
+    DECLARE v_roll_no VARCHAR(8);
+    DECLARE v_attendance_id VARCHAR(10);
     DECLARE cur CURSOR FOR 
         SELECT s.roll_no
         FROM STUDENT s
@@ -335,7 +334,7 @@ BEGIN
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
     
     -- Get max attendance_id
-    SELECT COALESCE(MAX(attendance_id), 0) INTO v_attendance_id FROM ATTENDANCE;
+    SELECT COALESCE(MAX(attendance_id), '0') INTO v_attendance_id FROM ATTENDANCE;
     
     OPEN cur;
     read_loop: LOOP
@@ -344,7 +343,7 @@ BEGIN
             LEAVE read_loop;
         END IF;
         
-        SET v_attendance_id = v_attendance_id + 1;
+        SET v_attendance_id = CONCAT('ATT', LPAD(CAST(CAST(SUBSTRING(v_attendance_id, 4) AS UNSIGNED) + 1 AS CHAR), 7, '0'));
         INSERT INTO ATTENDANCE (attendance_id, roll_no, lecture_id, is_present)
         VALUES (v_attendance_id, v_roll_no, p_lecture_id, TRUE);
     END LOOP;
