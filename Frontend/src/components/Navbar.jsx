@@ -1,12 +1,14 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, User, Menu, X, GraduationCap } from 'lucide-react';
+import { LogOut, User, Menu, X, GraduationCap, Moon, Sun } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { ROLES } from '../constants';
 import { useState } from 'react';
 import Button from './Button';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -45,7 +47,7 @@ const Navbar = () => {
   const navLinks = getNavLinks();
 
   return (
-    <nav className="bg-card shadow-sm border-b border-border">
+    <nav className="bg-card shadow-sm border-b border-border transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
@@ -63,13 +65,24 @@ const Navbar = () => {
                 <Link
                   key={link.to}
                   to={link.to}
-                  className="text-foreground hover:bg-accent hover:text-accent-foreground px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                  className="text-foreground hover:bg-accent hover:text-accent-foreground px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 transform hover:scale-105"
                 >
                   {link.label}
                 </Link>
               ))}
 
               <div className="flex items-center ml-4 pl-4 border-l border-border">
+                <button
+                  onClick={toggleTheme}
+                  className="p-2 rounded-md hover:bg-accent transition-colors mr-2"
+                  title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+                >
+                  {isDark ? (
+                    <Sun size={18} className="text-accent-foreground" />
+                  ) : (
+                    <Moon size={18} className="text-accent-foreground" />
+                  )}
+                </button>
                 <div className="flex items-center mr-4">
                   <User size={18} className="text-muted-foreground mr-2" />
                   <span className="text-sm">{user.name || user.email}</span>
@@ -109,16 +122,29 @@ const Navbar = () => {
               <Link
                 key={link.to}
                 to={link.to}
-                className="block px-3 py-2 rounded-md text-base font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                className="block px-3 py-2 rounded-md text-base font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-all duration-200 transform hover:translate-x-1"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {link.label}
               </Link>
             ))}
             <div className="border-t border-border pt-2 mt-2">
-              <div className="px-3 py-2 text-sm flex items-center gap-2">
-                <User size={18} className="text-muted-foreground" />
-                {user.name || user.email}
+              <div className="px-3 py-2 text-sm flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <User size={18} className="text-muted-foreground" />
+                  {user.name || user.email}
+                </div>
+                <button
+                  onClick={toggleTheme}
+                  className="p-2 rounded-md hover:bg-accent transition-colors"
+                  title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+                >
+                  {isDark ? (
+                    <Sun size={18} className="text-accent-foreground" />
+                  ) : (
+                    <Moon size={18} className="text-accent-foreground" />
+                  )}
+                </button>
               </div>
               <div className="px-3">
                 <Button
