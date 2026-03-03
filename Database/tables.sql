@@ -1,4 +1,7 @@
+
+CREATE DATABASE IF NOT EXISTS attendance_management_system;
 USE attendance_management_system;
+
 CREATE TABLE STUDENT (
     roll_no VARCHAR(8) PRIMARY KEY,
     name VARCHAR(100),
