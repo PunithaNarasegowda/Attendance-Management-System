@@ -26,8 +26,6 @@ import StudentDashboard from './pages/Student/StudentDashboard';
 import MyAttendance from './pages/Student/MyAttendance';
 import UploadCertificate from './pages/Student/UploadCertificate';
 import MyCertificates from './pages/Student/MyCertificates';
-
-import { ROLES } from './constants';
 import './App.css';
 
 function App() {
@@ -49,7 +47,7 @@ function App() {
             <Route
               path="/admin"
               element={
-                <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+                <ProtectedRoute>
                   <AdminDashboard />
                 </ProtectedRoute>
               }
@@ -57,7 +55,7 @@ function App() {
             <Route
               path="/admin/students"
               element={
-                <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+                <ProtectedRoute>
                   <ManageStudents />
                 </ProtectedRoute>
               }
@@ -65,7 +63,7 @@ function App() {
             <Route
               path="/admin/faculty"
               element={
-                <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+                <ProtectedRoute>
                   <ManageFaculty />
                 </ProtectedRoute>
               }
@@ -73,7 +71,7 @@ function App() {
             <Route
               path="/admin/courses"
               element={
-                <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+                <ProtectedRoute>
                   <ManageCourses />
                 </ProtectedRoute>
               }
@@ -83,7 +81,7 @@ function App() {
             <Route
               path="/faculty"
               element={
-                <ProtectedRoute allowedRoles={[ROLES.FACULTY]}>
+                <ProtectedRoute>
                   <FacultyDashboard />
                 </ProtectedRoute>
               }
@@ -91,7 +89,7 @@ function App() {
             <Route
               path="/faculty/dashboard"
               element={
-                <ProtectedRoute allowedRoles={[ROLES.FACULTY]}>
+                <ProtectedRoute>
                   <FacultyDashboard />
                 </ProtectedRoute>
               }
@@ -99,7 +97,7 @@ function App() {
             <Route
               path="/faculty/courses"
               element={
-                <ProtectedRoute allowedRoles={[ROLES.FACULTY]}>
+                <ProtectedRoute>
                   <BatchCourses />
                 </ProtectedRoute>
               }
@@ -107,7 +105,7 @@ function App() {
             <Route
               path="/faculty/sections"
               element={
-                <ProtectedRoute allowedRoles={[ROLES.FACULTY]}>
+                <ProtectedRoute>
                   <CourseSections />
                 </ProtectedRoute>
               }
@@ -115,7 +113,7 @@ function App() {
             <Route
               path="/faculty/lectures"
               element={
-                <ProtectedRoute allowedRoles={[ROLES.FACULTY]}>
+                <ProtectedRoute>
                   <ManageLectures />
                 </ProtectedRoute>
               }
@@ -123,7 +121,7 @@ function App() {
             <Route
               path="/faculty/attendance"
               element={
-                <ProtectedRoute allowedRoles={[ROLES.FACULTY]}>
+                <ProtectedRoute>
                   <MarkAttendance />
                 </ProtectedRoute>
               }
@@ -131,7 +129,7 @@ function App() {
             <Route
               path="/faculty/certificates"
               element={
-                <ProtectedRoute allowedRoles={[ROLES.FACULTY]}>
+                <ProtectedRoute>
                   <MedicalCertificates />
                 </ProtectedRoute>
               }
@@ -141,7 +139,7 @@ function App() {
             <Route
               path="/student"
               element={
-                <ProtectedRoute allowedRoles={[ROLES.STUDENT]}>
+                <ProtectedRoute>
                   <StudentDashboard />
                 </ProtectedRoute>
               }
@@ -149,7 +147,7 @@ function App() {
             <Route
               path="/student/attendance"
               element={
-                <ProtectedRoute allowedRoles={[ROLES.STUDENT]}>
+                <ProtectedRoute>
                   <MyAttendance />
                 </ProtectedRoute>
               }
@@ -157,7 +155,7 @@ function App() {
             <Route
               path="/student/upload-certificate"
               element={
-                <ProtectedRoute allowedRoles={[ROLES.STUDENT]}>
+                <ProtectedRoute>
                   <UploadCertificate />
                 </ProtectedRoute>
               }
@@ -165,7 +163,7 @@ function App() {
             <Route
               path="/student/certificates"
               element={
-                <ProtectedRoute allowedRoles={[ROLES.STUDENT]}>
+                <ProtectedRoute>
                   <MyCertificates />
                 </ProtectedRoute>
               }

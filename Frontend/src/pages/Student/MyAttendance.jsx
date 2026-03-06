@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Filter } from 'lucide-react';
 import Card from '../../components/Card';
-import Select from '../../components/Select';
 import Badge from '../../components/Badge';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import Alert from '../../components/Alert';
@@ -16,55 +14,58 @@ const MyAttendance = () => {
   const { user } = useAuth();
   const [courses, setCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState('');
-  const [attendanceRecords, setAttendanceRecords] = useState([]);
-  const [stats, setStats] = useState(null);
+  const [allAttendanceRecords, setAllAttendanceRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [alert, setAlert] = useState(null);
 
   useEffect(() => {
-    loadCourses();
+    loadData();
   }, []);
 
-  useEffect(() => {
-    if (selectedCourse) {
-      loadAttendance(selectedCourse);
-    }
-  }, [selectedCourse]);
-
-  const loadCourses = async () => {
+  const loadData = async () => {
     setLoading(true);
-    const result = await studentService.getStudentCourses(user.id);
-    
-    if (result.success) {
-      setCourses(result.data);
-      if (result.data.length > 0) {
-        setSelectedCourse(result.data[0].course_id);
+
+    const [coursesResult, attendanceResult] = await Promise.all([
+      studentService.getStudentCourses(user.id),
+      attendanceService.getAttendanceByStudent(user.id),
+    ]);
+
+    if (coursesResult.success) {
+      setCourses(coursesResult.data);
+      if (coursesResult.data.length > 0) {
+        setSelectedCourse(coursesResult.data[0].course_id);
       }
     } else {
-      setAlert({ type: 'error', message: result.error });
+      setAlert({ type: 'error', message: coursesResult.error });
     }
-    
-    setLoading(false);
-  };
 
-  const loadAttendance = async (courseId) => {
-    setLoading(true);
-    const result = await attendanceService.getStudentCourseSummary(user.id, courseId);
-    
-    if (result.success) {
-      setAttendanceRecords(result.data);
-      setStats(calculateAttendancePercentage(result.data));
+    if (attendanceResult.success) {
+      setAllAttendanceRecords(attendanceResult.data);
     } else {
-      setAlert({ type: 'error', message: result.error });
+      setAlert({ type: 'error', message: attendanceResult.error });
     }
-    
+
     setLoading(false);
   };
 
-  const courseOptions = courses.map((c) => ({
-    value: c.course_id,
-    label: `${c.course_id} - ${c.course_name}`,
-  }));
+  const getRecordsByCourse = (courseId) =>
+    allAttendanceRecords
+      .filter((record) => record.course_id === courseId)
+      .sort((a, b) => {
+        if (a.lecture_date === b.lecture_date) {
+          return Number(b.lecture_id) - Number(a.lecture_id);
+        }
+        return String(b.lecture_date).localeCompare(String(a.lecture_date));
+      });
+
+  const courseSummaries = courses.map((course) => {
+    const records = getRecordsByCourse(course.course_id);
+    return {
+      ...course,
+      stats: calculateAttendancePercentage(records),
+      records,
+    };
+  });
 
   const getStatusBadge = (record) => {
     if (record.is_present) {
@@ -82,7 +83,9 @@ const MyAttendance = () => {
     return <LoadingSpinner size="lg" className="min-h-screen" />;
   }
 
-  const selectedCourseData = courses.find((c) => c.course_id === selectedCourse);
+  const selectedCourseSummary = courseSummaries.find((c) => c.course_id === selectedCourse);
+  const selectedCourseRecords = selectedCourseSummary?.records || [];
+  const selectedCourseStats = selectedCourseSummary?.stats || null;
 
   return (
     <div className="p-6">
@@ -97,38 +100,39 @@ const MyAttendance = () => {
         />
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <div className="lg:col-span-1">
-          <Card>
-            <Select
-              label={
-                <div className="flex items-center">
-                  <Filter size={16} className="mr-2" />
-                  Filter by Course
-                </div>
-              }
-              id="course"
-              value={selectedCourse}
-              onChange={(e) => setSelectedCourse(e.target.value)}
-              options={courseOptions}
-            />
-          </Card>
-        </div>
-
-        {stats && selectedCourseData && (
-          <div className="lg:col-span-2">
-            <AttendancePercentageCard
-              courseName={selectedCourseData.course_name}
-              percentage={stats.percentage}
-              present={stats.present}
-              total={stats.total}
-            />
+      {courses.length === 0 ? (
+        <Card>
+          <p className="text-gray-600 text-center py-8">No courses enrolled yet.</p>
+        </Card>
+      ) : (
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-3">Course Attendance</h2>
+          <p className="text-sm text-gray-600 mb-4">Click a course card to view lecture-wise present/absent status.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {courseSummaries.map((course) => {
+              const isSelected = selectedCourse === course.course_id;
+              return (
+                <button
+                  key={course.course_id}
+                  type="button"
+                  onClick={() => setSelectedCourse(course.course_id)}
+                  className={`text-left rounded-lg transition-all ${isSelected ? 'ring-2 ring-primary-500 shadow-lg' : 'hover:shadow-md'}`}
+                >
+                  <AttendancePercentageCard
+                    courseName={`${course.course_id} - ${course.course_name}`}
+                    percentage={course.stats.percentage}
+                    present={course.stats.present}
+                    total={course.stats.total}
+                  />
+                </button>
+              );
+            })}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {selectedCourse && (
-        <Card title="Attendance Details">
+        <Card title={`Attendance Details - ${selectedCourseSummary?.course_name || selectedCourse}`}>
           {loading ? (
             <LoadingSpinner size="md" className="py-8" />
           ) : (
@@ -151,14 +155,14 @@ const MyAttendance = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {attendanceRecords.length === 0 ? (
+                  {selectedCourseRecords.length === 0 ? (
                     <tr>
                       <td colSpan="4" className="px-6 py-8 text-center text-gray-500">
                         No attendance records found
                       </td>
                     </tr>
                   ) : (
-                    attendanceRecords.map((record) => (
+                    selectedCourseRecords.map((record) => (
                       <tr key={record.lecture_id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {record.lecture_id}
@@ -182,7 +186,7 @@ const MyAttendance = () => {
         </Card>
       )}
 
-      {stats && stats.percentage < 75 && (
+      {selectedCourseStats && selectedCourseStats.percentage < 75 && (
         <Alert
           type="warning"
           message={`Your attendance is below 75%. You need to attend more lectures to improve your percentage.`}

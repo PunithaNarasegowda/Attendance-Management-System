@@ -2,60 +2,30 @@ import apiClient from '../utils/apiClient';
 import { STORAGE_KEYS } from '../constants';
 
 /**
- * Login user (Mock - no backend required)
+ * Login user
  */
 export const login = async (credentials) => {
   try {
-    // Mock login - just use the role from credentials
-    const { role } = credentials;
-    
-    // Create mock user based on role
-    let user;
-    switch (role) {
-      case 'admin':
-        user = {
-          id: 1,
-          name: 'Admin User',
-          email: 'admin@nith.ac.in',
-          role: 'admin',
-        };
-        break;
-      case 'faculty':
-        user = {
-          id: 1,
-          name: 'Faculty User',
-          email: 'faculty@nith.ac.in',
-          role: 'faculty',
-          facultyId: 'FAC001',
-          department: 'Computer Science',
-        };
-        break;
-      case 'student':
-        user = {
-          id: 1,
-          name: 'Student User',
-          email: 'student@nith.ac.in',
-          role: 'student',
-          rollNo: '21MCA001',
-          batchYear: 2021,
-          department: 'Computer Science',
-        };
-        break;
-      default:
-        throw new Error('Invalid role');
+    const response = await apiClient.post('/auth/login', credentials);
+    const payload = response.data || {};
+    const user = payload.user;
+    const token = payload.access_token;
+
+    if (!user || !token) {
+      return { success: false, error: 'Invalid login response from server' };
     }
 
-    const token = 'mock-jwt-token-' + role;
-
-    // Store in localStorage
     localStorage.setItem(STORAGE_KEYS.TOKEN, token);
     localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+    if (payload.refresh_token) {
+      localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, payload.refresh_token);
+    }
 
     return { success: true, user, token };
   } catch (error) {
     return {
       success: false,
-      error: error.message || 'Login failed',
+      error: error.response?.data?.detail || error.response?.data?.message || 'Login failed',
     };
   }
 };
@@ -107,7 +77,11 @@ export const refreshToken = async () => {
     if (!refresh) return { success: false };
 
     const response = await apiClient.post('/auth/refresh', { refreshToken: refresh });
-    const { token } = response.data;
+    const token = response.data?.access_token;
+
+    if (!token) {
+      return { success: false };
+    }
 
     localStorage.setItem(STORAGE_KEYS.TOKEN, token);
     return { success: true, token };

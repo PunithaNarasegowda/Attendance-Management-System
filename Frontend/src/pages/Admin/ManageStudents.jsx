@@ -1,29 +1,38 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Link } from 'lucide-react';
 import Card from '../../components/Card';
 import Table from '../../components/Table';
 import Button from '../../components/Button';
 import Modal from '../../components/Modal';
 import Input from '../../components/Input';
+import Select from '../../components/Select';
 import Alert from '../../components/Alert';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import studentService from '../../services/studentService';
+import courseService from '../../services/courseService';
 
 const ManageStudents = () => {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
   const [editingStudent, setEditingStudent] = useState(null);
+  const [assigningStudent, setAssigningStudent] = useState(null);
   const [alert, setAlert] = useState(null);
+  const [courses, setCourses] = useState([]);
   const [formData, setFormData] = useState({
     roll_no: '',
     name: '',
+    email: '',
+    password: '',
     batch_year: '',
     department: '',
   });
+  const [assignCourseId, setAssignCourseId] = useState('');
 
   useEffect(() => {
     loadStudents();
+    loadCourses();
   }, []);
 
   const loadStudents = async () => {
@@ -37,6 +46,13 @@ const ManageStudents = () => {
     setLoading(false);
   };
 
+  const loadCourses = async () => {
+    const result = await courseService.getAllCourses();
+    if (result.success) {
+      setCourses(result.data);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -47,7 +63,7 @@ const ManageStudents = () => {
     if (result.success) {
       setAlert({
         type: 'success',
-        message: `Student ${editingStudent ? 'updated' : 'created'} successfully`,
+        message: `Student ${editingStudent ? 'updated' : 'created'} successfully.`,
       });
       loadStudents();
       handleCloseModal();
@@ -73,10 +89,33 @@ const ManageStudents = () => {
     setFormData({
       roll_no: student.roll_no,
       name: student.name,
+      email: student.email || '',
+      password: '',
       batch_year: student.batch_year,
       department: student.department,
     });
     setShowModal(true);
+  };
+
+  const handleOpenAssignModal = (student) => {
+    setAssigningStudent(student);
+    setAssignCourseId('');
+    setShowAssignModal(true);
+  };
+
+  const handleAssignCourse = async (e) => {
+    e.preventDefault();
+    if (!assigningStudent) return;
+
+    const result = await studentService.enrollStudentInCourse(assigningStudent.roll_no, assignCourseId);
+    if (result.success) {
+      setAlert({ type: 'success', message: 'Student assigned to course successfully.' });
+      setShowAssignModal(false);
+      setAssigningStudent(null);
+      setAssignCourseId('');
+    } else {
+      setAlert({ type: 'error', message: result.error });
+    }
   };
 
   const handleCloseModal = () => {
@@ -85,6 +124,8 @@ const ManageStudents = () => {
     setFormData({
       roll_no: '',
       name: '',
+      email: '',
+      password: '',
       batch_year: '',
       department: '',
     });
@@ -112,6 +153,13 @@ const ManageStudents = () => {
           >
             <Trash2 size={18} />
           </button>
+          <button
+            onClick={() => handleOpenAssignModal(row)}
+            className="text-green-600 hover:text-green-800"
+            title="Assign course"
+          >
+            <Link size={18} />
+          </button>
         </div>
       ),
     },
@@ -126,6 +174,7 @@ const ManageStudents = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Manage Students</h1>
         <Button
+          type="button"
           onClick={() => setShowModal(true)}
           variant="primary"
           className="flex items-center"
@@ -169,6 +218,26 @@ const ManageStudents = () => {
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             required
           />
+          {!editingStudent && (
+            <Input
+              label="Email (optional)"
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              placeholder="Auto-generated if empty"
+            />
+          )}
+          {!editingStudent && (
+            <Input
+              label="Password (optional)"
+              id="password"
+              type="text"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              placeholder="Auto-generated if empty"
+            />
+          )}
           <Input
             label="Batch Year"
             id="batch_year"
@@ -185,11 +254,50 @@ const ManageStudents = () => {
             required
           />
           <div className="flex justify-end space-x-3 mt-6">
-            <Button variant="ghost" onClick={handleCloseModal}>
+            <Button type="button" variant="ghost" onClick={handleCloseModal}>
               Cancel
             </Button>
             <Button type="submit" variant="primary">
               {editingStudent ? 'Update' : 'Create'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal
+        isOpen={showAssignModal}
+        onClose={() => {
+          setShowAssignModal(false);
+          setAssigningStudent(null);
+          setAssignCourseId('');
+        }}
+        title={assigningStudent ? `Assign Course to ${assigningStudent.name}` : 'Assign Course'}
+      >
+        <form onSubmit={handleAssignCourse}>
+          <Select
+            label="Course"
+            id="assign_course_id"
+            value={assignCourseId}
+            onChange={(e) => setAssignCourseId(e.target.value)}
+            options={courses.map((course) => ({ value: course.course_id, label: `${course.course_id} - ${course.course_name}` }))}
+            placeholder="Select a course"
+            required
+          />
+
+          <div className="flex justify-end space-x-3 mt-6">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                setShowAssignModal(false);
+                setAssigningStudent(null);
+                setAssignCourseId('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" variant="primary">
+              Assign
             </Button>
           </div>
         </form>

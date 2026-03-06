@@ -1,12 +1,23 @@
 import apiClient from '../utils/apiClient';
 
+const mapStudent = (student) => ({
+  roll_no: student.roll_no,
+  name: student.name,
+  email: student.email,
+  batch_year: student.batch_year,
+  department: student.department,
+  login_email: student.login_email,
+  temporary_password: student.temporary_password,
+  role: student.role,
+});
+
 /**
  * Get all students
  */
 export const getAllStudents = async () => {
   try {
-    const response = await apiClient.get('/students');
-    return { success: true, data: response.data };
+    const response = await apiClient.get('/compat/students');
+    return { success: true, data: (response.data?.data || []).map(mapStudent) };
   } catch (error) {
     return {
       success: false,
@@ -20,8 +31,9 @@ export const getAllStudents = async () => {
  */
 export const getStudentByRollNo = async (rollNo) => {
   try {
-    const response = await apiClient.get(`/students/${rollNo}`);
-    return { success: true, data: response.data };
+    const response = await apiClient.get('/compat/students');
+    const student = (response.data?.data || []).find((item) => item.roll_no === rollNo);
+    return { success: true, data: student ? mapStudent(student) : null };
   } catch (error) {
     return {
       success: false,
@@ -35,8 +47,15 @@ export const getStudentByRollNo = async (rollNo) => {
  */
 export const createStudent = async (studentData) => {
   try {
-    const response = await apiClient.post('/students', studentData);
-    return { success: true, data: response.data };
+    const response = await apiClient.post('/compat/students', {
+      roll_no: studentData.roll_no,
+      name: studentData.name,
+      email: studentData.email,
+      password: studentData.password,
+      batch_year: Number(studentData.batch_year),
+      department: studentData.department,
+    });
+    return { success: true, data: mapStudent(response.data?.data || {}) };
   } catch (error) {
     return {
       success: false,
@@ -50,8 +69,12 @@ export const createStudent = async (studentData) => {
  */
 export const updateStudent = async (rollNo, studentData) => {
   try {
-    const response = await apiClient.put(`/students/${rollNo}`, studentData);
-    return { success: true, data: response.data };
+    const response = await apiClient.put(`/compat/students/${rollNo}`, {
+      name: studentData.name,
+      batch_year: Number(studentData.batch_year),
+      department: studentData.department,
+    });
+    return { success: true, data: mapStudent(response.data?.data || {}) };
   } catch (error) {
     return {
       success: false,
@@ -65,8 +88,8 @@ export const updateStudent = async (rollNo, studentData) => {
  */
 export const deleteStudent = async (rollNo) => {
   try {
-    const response = await apiClient.delete(`/students/${rollNo}`);
-    return { success: true, data: response.data };
+    const response = await apiClient.delete(`/compat/students/${rollNo}`);
+    return { success: true, data: response.data?.data };
   } catch (error) {
     return {
       success: false,
@@ -80,8 +103,13 @@ export const deleteStudent = async (rollNo) => {
  */
 export const getStudentsByBatch = async (batchYear) => {
   try {
-    const response = await apiClient.get(`/students/batch/${batchYear}`);
-    return { success: true, data: response.data };
+    const response = await apiClient.get('/compat/students');
+    return {
+      success: true,
+      data: (response.data?.data || [])
+        .filter((student) => String(student.batch_year) === String(batchYear))
+        .map(mapStudent),
+    };
   } catch (error) {
     return {
       success: false,
@@ -95,8 +123,15 @@ export const getStudentsByBatch = async (batchYear) => {
  */
 export const getStudentCourses = async (rollNo) => {
   try {
-    const response = await apiClient.get(`/students/${rollNo}/courses`);
-    return { success: true, data: response.data };
+    const response = await apiClient.get(`/compat/students/${rollNo}/courses`);
+    return {
+      success: true,
+      data: (response.data?.data || []).map((course) => ({
+        course_id: course.course_id,
+        course_name: course.course_name,
+        section_id: course.section_id,
+      })),
+    };
   } catch (error) {
     return {
       success: false,
@@ -110,11 +145,11 @@ export const getStudentCourses = async (rollNo) => {
  */
 export const enrollStudentInCourse = async (rollNo, courseId, sectionId) => {
   try {
-    const response = await apiClient.post(`/students/${rollNo}/enroll`, {
-      courseId,
-      sectionId,
+    const response = await apiClient.post(`/compat/students/${rollNo}/enroll`, {
+      course_id: courseId,
+      section_id: sectionId,
     });
-    return { success: true, data: response.data };
+    return { success: true, data: response.data?.data };
   } catch (error) {
     return {
       success: false,

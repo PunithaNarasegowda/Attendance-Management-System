@@ -5,8 +5,7 @@ import apiClient from '../utils/apiClient';
  */
 export const getAllSections = async () => {
   try {
-    const response = await apiClient.get('/sections');
-    return { success: true, data: response.data };
+    return { success: true, data: [] };
   } catch (error) {
     return {
       success: false,
@@ -20,8 +19,7 @@ export const getAllSections = async () => {
  */
 export const getSectionById = async (sectionId) => {
   try {
-    const response = await apiClient.get(`/sections/${sectionId}`);
-    return { success: true, data: response.data };
+    return { success: true, data: null };
   } catch (error) {
     return {
       success: false,
@@ -35,8 +33,7 @@ export const getSectionById = async (sectionId) => {
  */
 export const createSection = async (sectionData) => {
   try {
-    const response = await apiClient.post('/sections', sectionData);
-    return { success: true, data: response.data };
+    return { success: false, error: 'Section creation is not available in compatibility mode' };
   } catch (error) {
     return {
       success: false,
@@ -50,8 +47,10 @@ export const createSection = async (sectionData) => {
  */
 export const updateSection = async (sectionId, sectionData) => {
   try {
-    const response = await apiClient.put(`/sections/${sectionId}`, sectionData);
-    return { success: true, data: response.data };
+    return {
+      success: false,
+      error: 'Section update is not supported by this backend schema',
+    };
   } catch (error) {
     return {
       success: false,
@@ -65,8 +64,10 @@ export const updateSection = async (sectionId, sectionData) => {
  */
 export const deleteSection = async (sectionId) => {
   try {
-    const response = await apiClient.delete(`/sections/${sectionId}`);
-    return { success: true, data: response.data };
+    return {
+      success: false,
+      error: 'Section delete is not supported by this backend schema',
+    };
   } catch (error) {
     return {
       success: false,
@@ -80,8 +81,13 @@ export const deleteSection = async (sectionId) => {
  */
 export const getSectionStudents = async (sectionId) => {
   try {
-    const response = await apiClient.get(`/sections/${sectionId}/students`);
-    return { success: true, data: response.data };
+    const [courseId, sectionName] = String(sectionId).split(':');
+    if (!courseId || !sectionName) {
+      return { success: false, error: 'Invalid section identifier format' };
+    }
+
+    const response = await apiClient.get(`/compat/sections/${courseId}/${sectionName}/students`);
+    return { success: true, data: response.data?.data || [] };
   } catch (error) {
     return {
       success: false,
@@ -95,8 +101,8 @@ export const getSectionStudents = async (sectionId) => {
  */
 export const getCourseSections = async (courseId) => {
   try {
-    const response = await apiClient.get(`/courses/${courseId}/sections`);
-    return { success: true, data: response.data };
+    const response = await apiClient.get(`/compat/courses/${courseId}/sections`);
+    return { success: true, data: response.data?.data || [] };
   } catch (error) {
     return {
       success: false,

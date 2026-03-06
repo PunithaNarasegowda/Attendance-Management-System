@@ -5,8 +5,12 @@ USE attendance_management_system;
 CREATE TABLE STUDENT (
     roll_no VARCHAR(8) PRIMARY KEY,
     name VARCHAR(100),
+    email VARCHAR(255) UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
     batch_year INT,
-    department VARCHAR(100)
+    department VARCHAR(100),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE TABLE COURSE (
     course_id VARCHAR(6) PRIMARY KEY,
@@ -21,8 +25,11 @@ CREATE TABLE SECTION (
 CREATE TABLE FACULTY (
     faculty_id VARCHAR(10) PRIMARY KEY,
     name VARCHAR(100),
-    email VARCHAR(100),
-    department VARCHAR(100)
+    email VARCHAR(255) UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    department VARCHAR(100),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE TABLE LECTURE (
     lecture_id INT PRIMARY KEY,

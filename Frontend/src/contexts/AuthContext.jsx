@@ -1,7 +1,6 @@
 import { createContext, useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
-import { ROLES } from '../constants';
 
 export const AuthContext = createContext(null);
 
@@ -23,20 +22,12 @@ export const AuthProvider = ({ children }) => {
     const result = await authService.login(credentials);
     if (result.success) {
       setUser(result.user);
-      
-      // Navigate based on role
-      switch (result.user.role) {
-        case ROLES.ADMIN:
-          navigate('/admin');
-          break;
-        case ROLES.FACULTY:
-          navigate('/faculty');
-          break;
-        case ROLES.STUDENT:
-          navigate('/student');
-          break;
-        default:
-          navigate('/');
+      if (result.user?.role === 'faculty') {
+        navigate('/faculty');
+      } else if (result.user?.role === 'student') {
+        navigate('/student');
+      } else {
+        navigate('/admin');
       }
       return { success: true };
     }

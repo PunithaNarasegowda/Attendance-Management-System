@@ -1,14 +1,14 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LogOut, User, Menu, X, GraduationCap, Moon, Sun } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
-import { ROLES } from '../constants';
 import { useState } from 'react';
 import Button from './Button';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
+  const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -20,28 +20,34 @@ const Navbar = () => {
   const getNavLinks = () => {
     if (!user) return [];
 
-    switch (user.role) {
-      case ROLES.ADMIN:
-        return [
-          { to: '/admin', label: 'Dashboard' },
-          { to: '/admin/faculty', label: 'Faculty' },
-          { to: '/admin/students', label: 'Students' },
-          { to: '/admin/courses', label: 'Courses' },
-        ];
-      case ROLES.FACULTY:
-        return [
-          { to: '/faculty', label: 'Dashboard' },
-          { to: '/faculty/certificates', label: 'Medical Certificates' },
-        ];
-      case ROLES.STUDENT:
-        return [
-          { to: '/student', label: 'Dashboard' },
-          { to: '/student/attendance', label: 'My Attendance' },
-          { to: '/student/certificates', label: 'Certificates' },
-        ];
-      default:
-        return [];
+    const path = location.pathname;
+
+    if (path.startsWith('/faculty')) {
+      return [
+        { to: '/faculty', label: 'Dashboard' },
+        { to: '/faculty/courses', label: 'Courses' },
+        { to: '/faculty/sections', label: 'Sections' },
+        { to: '/faculty/lectures', label: 'Lectures' },
+        { to: '/faculty/attendance', label: 'Attendance' },
+        { to: '/faculty/certificates', label: 'Medical Certificates' },
+      ];
     }
+
+    if (path.startsWith('/student')) {
+      return [
+        { to: '/student', label: 'Dashboard' },
+        { to: '/student/attendance', label: 'My Attendance' },
+        { to: '/student/upload-certificate', label: 'Upload Certificate' },
+        { to: '/student/certificates', label: 'My Certificates' },
+      ];
+    }
+
+    return [
+      { to: '/admin', label: 'Dashboard' },
+      { to: '/admin/faculty', label: 'Faculty' },
+      { to: '/admin/students', label: 'Students' },
+      { to: '/admin/courses', label: 'Courses' },
+    ];
   };
 
   const navLinks = getNavLinks();

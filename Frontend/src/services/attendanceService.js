@@ -1,12 +1,20 @@
 import apiClient from '../utils/apiClient';
 
+const mapAttendanceRecord = (record) => ({
+  ...record,
+  course_id: record.course_id || record.course_code || null,
+  section_id: record.section_id || record.section_name || null,
+  medical_certificate_path: null,
+  medical_approved: null,
+});
+
 /**
  * Get attendance for a lecture
  */
 export const getAttendanceByLecture = async (lectureId) => {
   try {
-    const response = await apiClient.get(`/attendance/lecture/${lectureId}`);
-    return { success: true, data: response.data };
+    const response = await apiClient.get(`/compat/attendance/lecture/${lectureId}`);
+    return { success: true, data: response.data?.data || [] };
   } catch (error) {
     return {
       success: false,
@@ -20,8 +28,8 @@ export const getAttendanceByLecture = async (lectureId) => {
  */
 export const getAttendanceByStudent = async (rollNo) => {
   try {
-    const response = await apiClient.get(`/attendance/student/${rollNo}`);
-    return { success: true, data: response.data };
+    const response = await apiClient.get(`/compat/attendance/student/${rollNo}`);
+    return { success: true, data: (response.data?.data || []).map(mapAttendanceRecord) };
   } catch (error) {
     return {
       success: false,
@@ -35,8 +43,7 @@ export const getAttendanceByStudent = async (rollNo) => {
  */
 export const getAttendanceReport = async (courseId, sectionId) => {
   try {
-    const response = await apiClient.get(`/attendance/report/${courseId}/${sectionId}`);
-    return { success: true, data: response.data };
+    return { success: true, data: [] };
   } catch (error) {
     return {
       success: false,
@@ -50,8 +57,18 @@ export const getAttendanceReport = async (courseId, sectionId) => {
  */
 export const markAttendance = async (lectureId, attendanceData) => {
   try {
-    const response = await apiClient.post(`/attendance/lecture/${lectureId}`, attendanceData);
-    return { success: true, data: response.data };
+    const normalized = Array.isArray(attendanceData) ? attendanceData : [];
+
+    for (const record of normalized) {
+      const payload = {
+        roll_no: String(record.roll_no),
+        lecture_id: Number(lectureId),
+        is_present: !!record.is_present,
+      };
+      await apiClient.post('/compat/attendance/mark', payload);
+    }
+
+    return { success: true, data: null };
   } catch (error) {
     return {
       success: false,
@@ -65,10 +82,12 @@ export const markAttendance = async (lectureId, attendanceData) => {
  */
 export const updateAttendance = async (rollNo, lectureId, isPresent) => {
   try {
-    const response = await apiClient.put(`/attendance/${rollNo}/${lectureId}`, {
+    const response = await apiClient.post('/compat/attendance/mark', {
+      roll_no: String(rollNo),
+      lecture_id: Number(lectureId),
       is_present: isPresent,
     });
-    return { success: true, data: response.data };
+    return { success: true, data: response.data?.data };
   } catch (error) {
     return {
       success: false,
@@ -82,8 +101,9 @@ export const updateAttendance = async (rollNo, lectureId, isPresent) => {
  */
 export const getStudentCourseSummary = async (rollNo, courseId) => {
   try {
-    const response = await apiClient.get(`/attendance/student/${rollNo}/course/${courseId}`);
-    return { success: true, data: response.data };
+    const response = await apiClient.get(`/compat/attendance/student/${rollNo}/course/${courseId}`);
+    const filtered = response.data?.data || [];
+    return { success: true, data: filtered.map(mapAttendanceRecord) };
   } catch (error) {
     return {
       success: false,
@@ -97,17 +117,10 @@ export const getStudentCourseSummary = async (rollNo, courseId) => {
  */
 export const uploadMedicalCertificate = async (rollNo, lectureId, file) => {
   try {
-    const formData = new FormData();
-    formData.append('certificate', file);
-    formData.append('roll_no', rollNo);
-    formData.append('lecture_id', lectureId);
-
-    const response = await apiClient.post('/attendance/medical-certificate', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return { success: true, data: response.data };
+    return {
+      success: false,
+      error: 'Medical certificate upload endpoint is not available in backend yet',
+    };
   } catch (error) {
     return {
       success: false,
@@ -121,8 +134,7 @@ export const uploadMedicalCertificate = async (rollNo, lectureId, file) => {
  */
 export const getPendingCertificates = async (facultyId) => {
   try {
-    const response = await apiClient.get(`/attendance/medical-certificates/pending/${facultyId}`);
-    return { success: true, data: response.data };
+    return { success: true, data: [] };
   } catch (error) {
     return {
       success: false,
@@ -136,10 +148,10 @@ export const getPendingCertificates = async (facultyId) => {
  */
 export const updateCertificateStatus = async (rollNo, lectureId, approved) => {
   try {
-    const response = await apiClient.put(`/attendance/${rollNo}/${lectureId}/certificate`, {
-      medical_approved: approved,
-    });
-    return { success: true, data: response.data };
+    return {
+      success: false,
+      error: 'Medical certificate review endpoint is not available in backend yet',
+    };
   } catch (error) {
     return {
       success: false,

@@ -1,29 +1,41 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Link } from 'lucide-react';
 import Card from '../../components/Card';
 import Table from '../../components/Table';
 import Button from '../../components/Button';
 import Modal from '../../components/Modal';
 import Input from '../../components/Input';
+import Select from '../../components/Select';
 import Alert from '../../components/Alert';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import facultyService from '../../services/facultyService';
+import courseService from '../../services/courseService';
 
 const ManageFaculty = () => {
   const [faculty, setFaculty] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
   const [editingFaculty, setEditingFaculty] = useState(null);
+  const [assigningFaculty, setAssigningFaculty] = useState(null);
   const [alert, setAlert] = useState(null);
+  const [courses, setCourses] = useState([]);
+  const [sections, setSections] = useState([]);
   const [formData, setFormData] = useState({
     faculty_id: '',
     name: '',
     email: '',
+    password: '',
     department: '',
+  });
+  const [assignForm, setAssignForm] = useState({
+    course_id: '',
+    section_id: '',
   });
 
   useEffect(() => {
     loadFaculty();
+    loadCourses();
   }, []);
 
   const loadFaculty = async () => {
@@ -37,6 +49,27 @@ const ManageFaculty = () => {
     setLoading(false);
   };
 
+  const loadCourses = async () => {
+    const result = await courseService.getAllCourses();
+    if (result.success) {
+      setCourses(result.data);
+    }
+  };
+
+  const loadSections = async (courseId) => {
+    if (!courseId) {
+      setSections([]);
+      return;
+    }
+    const result = await courseService.getCourseSections(courseId);
+    if (result.success) {
+      setSections(result.data);
+    } else {
+      setSections([]);
+      setAlert({ type: 'error', message: result.error });
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -47,7 +80,7 @@ const ManageFaculty = () => {
     if (result.success) {
       setAlert({
         type: 'success',
-        message: `Faculty ${editingFaculty ? 'updated' : 'created'} successfully`,
+        message: `Faculty ${editingFaculty ? 'updated' : 'created'} successfully.`,
       });
       loadFaculty();
       handleCloseModal();
@@ -74,9 +107,43 @@ const ManageFaculty = () => {
       faculty_id: fac.faculty_id,
       name: fac.name,
       email: fac.email,
+      password: '',
       department: fac.department,
     });
     setShowModal(true);
+  };
+
+  const handleOpenAssignModal = async (fac) => {
+    setAssigningFaculty(fac);
+    setAssignForm({ course_id: '', section_id: '' });
+    setSections([]);
+    setShowAssignModal(true);
+  };
+
+  const handleCourseSelection = async (courseId) => {
+    setAssignForm({ course_id: courseId, section_id: '' });
+    await loadSections(courseId);
+  };
+
+  const handleAssign = async (e) => {
+    e.preventDefault();
+    if (!assigningFaculty) return;
+
+    const result = await facultyService.assignFacultyToCourse(
+      assigningFaculty.faculty_id,
+      assignForm.course_id,
+      assignForm.section_id,
+    );
+
+    if (result.success) {
+      setAlert({ type: 'success', message: 'Faculty assigned to course successfully.' });
+      setShowAssignModal(false);
+      setAssigningFaculty(null);
+      setAssignForm({ course_id: '', section_id: '' });
+      setSections([]);
+    } else {
+      setAlert({ type: 'error', message: result.error });
+    }
   };
 
   const handleCloseModal = () => {
@@ -86,6 +153,7 @@ const ManageFaculty = () => {
       faculty_id: '',
       name: '',
       email: '',
+      password: '',
       department: '',
     });
   };
@@ -112,6 +180,13 @@ const ManageFaculty = () => {
           >
             <Trash2 size={18} />
           </button>
+          <button
+            onClick={() => handleOpenAssignModal(row)}
+            className="text-green-600 hover:text-green-800"
+            title="Assign course"
+          >
+            <Link size={18} />
+          </button>
         </div>
       ),
     },
@@ -126,9 +201,10 @@ const ManageFaculty = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Manage Faculty</h1>
         <Button
+          type="button"
           onClick={() => setShowModal(true)}
-          variant="primary"
-          className="flex items-center"
+          variant="outline"
+          className="flex items-center border-[#1a237e] text-[#1a237e] hover:bg-[#1a237e]/10"
         >
           <Plus size={20} className="mr-2" />
           Add Faculty
@@ -177,6 +253,16 @@ const ManageFaculty = () => {
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             required
           />
+          {!editingFaculty && (
+            <Input
+              label="Password (optional)"
+              id="password"
+              type="text"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              placeholder="Auto-generated if empty"
+            />
+          )}
           <Input
             label="Department"
             id="department"
@@ -185,11 +271,63 @@ const ManageFaculty = () => {
             required
           />
           <div className="flex justify-end space-x-3 mt-6">
-            <Button variant="ghost" onClick={handleCloseModal}>
+            <Button type="button" variant="ghost" onClick={handleCloseModal}>
               Cancel
             </Button>
             <Button type="submit" variant="primary">
               {editingFaculty ? 'Update' : 'Create'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal
+        isOpen={showAssignModal}
+        onClose={() => {
+          setShowAssignModal(false);
+          setAssigningFaculty(null);
+          setAssignForm({ course_id: '', section_id: '' });
+          setSections([]);
+        }}
+        title={assigningFaculty ? `Assign Course to ${assigningFaculty.name}` : 'Assign Course'}
+      >
+        <form onSubmit={handleAssign}>
+          <Select
+            label="Course"
+            id="course_id"
+            value={assignForm.course_id}
+            onChange={(e) => handleCourseSelection(e.target.value)}
+            options={courses.map((course) => ({ value: course.course_id, label: `${course.course_id} - ${course.course_name}` }))}
+            placeholder="Select a course"
+            required
+          />
+
+          <Select
+            label="Section"
+            id="section_id"
+            value={assignForm.section_id}
+            onChange={(e) => setAssignForm({ ...assignForm, section_id: e.target.value })}
+            options={sections.map((section) => ({ value: section.section_id, label: section.section_id }))}
+            placeholder={assignForm.course_id ? 'Select a section' : 'Select a course first'}
+            disabled={!assignForm.course_id}
+            required
+          />
+
+          <div className="flex justify-end space-x-3 mt-6">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                setShowAssignModal(false);
+                setAssigningFaculty(null);
+                setAssignForm({ course_id: '', section_id: '' });
+                setSections([]);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" variant="primary">
+              Assign
             </Button>
           </div>
         </form>

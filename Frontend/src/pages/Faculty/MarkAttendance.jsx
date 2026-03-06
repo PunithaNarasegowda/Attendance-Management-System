@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Save, Lock } from 'lucide-react';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
@@ -14,6 +15,12 @@ import { LECTURE_STATUS } from '../../constants';
 
 const MarkAttendance = () => {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const currentCourseId = searchParams.get('course') || '';
+  const currentSectionId = searchParams.get('section') || '';
+  const queryLectureId = searchParams.get('lecture') || '';
+  const isContextAttendance = Boolean(currentCourseId && currentSectionId);
+
   const [lectures, setLectures] = useState([]);
   const [selectedLecture, setSelectedLecture] = useState('');
   const [students, setStudents] = useState([]);
@@ -23,7 +30,44 @@ const MarkAttendance = () => {
 
   useEffect(() => {
     loadLectures();
-  }, []);
+  }, [user.id]);
+
+  useEffect(() => {
+    if (!lectures.length || !isContextAttendance) return;
+
+    const scopedLectures = lectures.filter(
+      (lecture) => lecture.course_id === currentCourseId && lecture.section_id === currentSectionId
+    );
+
+    if (!scopedLectures.length) {
+      setSelectedLecture('');
+      setStudents([]);
+      setAttendance({});
+      return;
+    }
+
+    let lectureToUse = scopedLectures[0];
+
+    if (queryLectureId) {
+      const fromQuery = scopedLectures.find((l) => String(l.lecture_id) === String(queryLectureId));
+      if (fromQuery) {
+        lectureToUse = fromQuery;
+      }
+    } else {
+      lectureToUse = [...scopedLectures].sort((a, b) => {
+        if (a.lecture_date === b.lecture_date) {
+          return b.lecture_id - a.lecture_id;
+        }
+        return String(b.lecture_date).localeCompare(String(a.lecture_date));
+      })[0];
+    }
+
+    const lectureId = String(lectureToUse.lecture_id);
+    if (selectedLecture !== lectureId) {
+      setSelectedLecture(lectureId);
+      loadStudentsAndAttendance(lectureId, scopedLectures);
+    }
+  }, [lectures, isContextAttendance, currentCourseId, currentSectionId, queryLectureId]);
 
   const loadLectures = async () => {
     const result = await lectureService.getLecturesByFaculty(user.id);
@@ -32,16 +76,26 @@ const MarkAttendance = () => {
     }
   };
 
-  const loadStudentsAndAttendance = async (lectureId) => {
+  const loadStudentsAndAttendance = async (lectureId, sourceLectures = lectures) => {
     setLoading(true);
-    
-    const lecture = lectures.find((l) => l.lecture_id === parseInt(lectureId));
-    if (!lecture) return;
+
+    const lecture = sourceLectures.find((l) => l.lecture_id === parseInt(lectureId, 10));
+    if (!lecture) {
+      setLoading(false);
+      setAlert({ type: 'error', message: 'Selected lecture could not be found.' });
+      return;
+    }
 
     const [studentsResult, attendanceResult] = await Promise.all([
-      sectionService.getSectionStudents(lecture.section_id),
+      sectionService.getSectionStudents(lecture.section_key || `${lecture.course_id}:${lecture.section_id}`),
       attendanceService.getAttendanceByLecture(lectureId),
     ]);
+
+    if (!studentsResult.success) {
+      setLoading(false);
+      setAlert({ type: 'error', message: studentsResult.error || 'Failed to load students for section.' });
+      return;
+    }
 
     if (studentsResult.success) {
       setStudents(studentsResult.data);
@@ -51,6 +105,11 @@ const MarkAttendance = () => {
       const attendanceMap = {};
       attendanceResult.data.forEach((record) => {
         attendanceMap[record.roll_no] = record.is_present;
+      });
+      studentsResult.data.forEach((student) => {
+        if (!(student.roll_no in attendanceMap)) {
+          attendanceMap[student.roll_no] = false;
+        }
       });
       setAttendance(attendanceMap);
     } else {
@@ -84,10 +143,17 @@ const MarkAttendance = () => {
   };
 
   const handleSave = async () => {
-    if (!selectedLecture) return;
+    if (!selectedLecture) {
+      setAlert({ type: 'error', message: 'No lecture selected for attendance.' });
+      return;
+    }
+    if (!students.length) {
+      setAlert({ type: 'error', message: 'No students found for this lecture section.' });
+      return;
+    }
 
     const attendanceData = Object.entries(attendance).map(([rollNo, isPresent]) => ({
-      roll_no: parseInt(rollNo),
+      roll_no: rollNo,
       is_present: isPresent,
     }));
 
@@ -119,6 +185,13 @@ const MarkAttendance = () => {
     label: `${lecture.course_id} - ${lecture.section_id} - ${formatDisplayDate(lecture.lecture_date)}`,
   }));
 
+  const filteredLectureOptions = isContextAttendance
+    ? lectureOptions.filter((option) => {
+        const lecture = lectures.find((l) => String(l.lecture_id) === String(option.value));
+        return lecture?.course_id === currentCourseId && lecture?.section_id === currentSectionId;
+      })
+    : lectureOptions;
+
   const selectedLectureData = lectures.find((l) => l.lecture_id === parseInt(selectedLecture));
   const isFinalized = selectedLectureData?.status === LECTURE_STATUS.FINALIZED;
 
@@ -136,14 +209,26 @@ const MarkAttendance = () => {
       )}
 
       <Card className="mb-6">
-        <Select
-          label="Select Lecture"
-          id="lecture"
-          value={selectedLecture}
-          onChange={handleLectureChange}
-          options={lectureOptions}
-          placeholder="Choose a lecture"
-        />
+        {isContextAttendance ? (
+          <div>
+            <p className="text-sm text-gray-600 mb-1">Current Context</p>
+            <p className="font-semibold text-gray-900">
+              Course {currentCourseId} | Section {currentSectionId}
+            </p>
+            <p className="text-sm text-gray-600 mt-2">
+              Latest lecture for this course and section is selected automatically.
+            </p>
+          </div>
+        ) : (
+          <Select
+            label="Select Lecture"
+            id="lecture"
+            value={selectedLecture}
+            onChange={handleLectureChange}
+            options={filteredLectureOptions}
+            placeholder="Choose a lecture"
+          />
+        )}
       </Card>
 
       {selectedLecture && !loading && (

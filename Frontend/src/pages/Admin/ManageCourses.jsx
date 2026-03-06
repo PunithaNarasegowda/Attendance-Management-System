@@ -118,6 +118,7 @@ const ManageCourses = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Manage Courses</h1>
         <Button
+          type="button"
           onClick={() => setShowModal(true)}
           variant="primary"
           className="flex items-center"

@@ -1,12 +1,24 @@
 import apiClient from '../utils/apiClient';
 
+const mapLecture = (lecture) => ({
+  lecture_id: lecture.lecture_id,
+  lecture_date: lecture.lecture_date,
+  status:
+    String(lecture.status || '').toLowerCase() === 'completed'
+      ? 'finalized'
+      : String(lecture.status || '').toLowerCase(),
+  course_id: lecture.course_id,
+  section_id: lecture.section_name,
+  section_key: `${lecture.course_id}:${lecture.section_name}`,
+  faculty_id: lecture.faculty_id,
+});
+
 /**
  * Get all lectures
  */
 export const getAllLectures = async () => {
   try {
-    const response = await apiClient.get('/lectures');
-    return { success: true, data: response.data };
+    return { success: false, error: 'Use getLecturesByFaculty for this backend' };
   } catch (error) {
     return {
       success: false,
@@ -20,8 +32,7 @@ export const getAllLectures = async () => {
  */
 export const getLectureById = async (lectureId) => {
   try {
-    const response = await apiClient.get(`/lectures/${lectureId}`);
-    return { success: true, data: response.data };
+    return { success: false, error: 'Use getLecturesByFaculty and filter by lecture id' };
   } catch (error) {
     return {
       success: false,
@@ -35,8 +46,22 @@ export const getLectureById = async (lectureId) => {
  */
 export const createLecture = async (lectureData) => {
   try {
-    const response = await apiClient.post('/lectures', lectureData);
-    return { success: true, data: response.data };
+    const lectureId = Number(Date.now().toString().slice(-7));
+    const response = await apiClient.post('/compat/lectures', {
+      lecture_id: lectureId,
+      lecture_date: lectureData.lecture_date,
+      status: 'ongoing',
+      course_id: lectureData.course_id,
+      section_id: lectureData.section_id,
+      faculty_id: lectureData.faculty_id,
+    });
+
+    return {
+      success: true,
+      data: {
+        lecture_id: response.data?.data?.lecture_id || lectureId,
+      },
+    };
   } catch (error) {
     return {
       success: false,
@@ -50,8 +75,7 @@ export const createLecture = async (lectureData) => {
  */
 export const updateLecture = async (lectureId, lectureData) => {
   try {
-    const response = await apiClient.put(`/lectures/${lectureId}`, lectureData);
-    return { success: true, data: response.data };
+    return { success: false, error: 'Lecture update is not supported' };
   } catch (error) {
     return {
       success: false,
@@ -65,8 +89,8 @@ export const updateLecture = async (lectureId, lectureData) => {
  */
 export const deleteLecture = async (lectureId) => {
   try {
-    const response = await apiClient.delete(`/lectures/${lectureId}`);
-    return { success: true, data: response.data };
+    const response = await apiClient.delete(`/compat/lectures/${lectureId}`);
+    return { success: true, data: response.data?.data };
   } catch (error) {
     return {
       success: false,
@@ -80,8 +104,8 @@ export const deleteLecture = async (lectureId) => {
  */
 export const getLecturesByFaculty = async (facultyId) => {
   try {
-    const response = await apiClient.get(`/lectures/faculty/${facultyId}`);
-    return { success: true, data: response.data };
+    const response = await apiClient.get(`/compat/lectures/faculty/${facultyId}`);
+    return { success: true, data: (response.data?.data || []).map(mapLecture) };
   } catch (error) {
     return {
       success: false,
@@ -95,8 +119,7 @@ export const getLecturesByFaculty = async (facultyId) => {
  */
 export const getLecturesByCourseSection = async (courseId, sectionId) => {
   try {
-    const response = await apiClient.get(`/lectures/course/${courseId}/section/${sectionId}`);
-    return { success: true, data: response.data };
+    return { success: false, error: 'Use getLecturesByFaculty and filter by course/section' };
   } catch (error) {
     return {
       success: false,
@@ -110,8 +133,8 @@ export const getLecturesByCourseSection = async (courseId, sectionId) => {
  */
 export const finalizeLecture = async (lectureId) => {
   try {
-    const response = await apiClient.post(`/lectures/${lectureId}/finalize`);
-    return { success: true, data: response.data };
+    const response = await apiClient.post(`/compat/lectures/${lectureId}/finalize`);
+    return { success: true, data: response.data?.data };
   } catch (error) {
     return {
       success: false,

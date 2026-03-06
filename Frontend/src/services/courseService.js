@@ -1,12 +1,17 @@
 import apiClient from '../utils/apiClient';
 
+const mapCourse = (course) => ({
+  course_id: course.course_id,
+  course_name: course.course_name,
+});
+
 /**
  * Get all courses
  */
 export const getAllCourses = async () => {
   try {
-    const response = await apiClient.get('/courses');
-    return { success: true, data: response.data };
+    const response = await apiClient.get('/compat/courses');
+    return { success: true, data: (response.data?.data || []).map(mapCourse) };
   } catch (error) {
     return {
       success: false,
@@ -20,8 +25,9 @@ export const getAllCourses = async () => {
  */
 export const getCourseById = async (courseId) => {
   try {
-    const response = await apiClient.get(`/courses/${courseId}`);
-    return { success: true, data: response.data };
+    const response = await apiClient.get('/compat/courses');
+    const course = (response.data?.data || []).find((item) => item.course_id === courseId);
+    return { success: true, data: course ? mapCourse(course) : null };
   } catch (error) {
     return {
       success: false,
@@ -35,8 +41,11 @@ export const getCourseById = async (courseId) => {
  */
 export const createCourse = async (courseData) => {
   try {
-    const response = await apiClient.post('/courses', courseData);
-    return { success: true, data: response.data };
+    const response = await apiClient.post('/compat/courses', {
+      course_id: courseData.course_id,
+      course_name: courseData.course_name,
+    });
+    return { success: true, data: mapCourse(response.data?.data || {}) };
   } catch (error) {
     return {
       success: false,
@@ -50,8 +59,10 @@ export const createCourse = async (courseData) => {
  */
 export const updateCourse = async (courseId, courseData) => {
   try {
-    const response = await apiClient.put(`/courses/${courseId}`, courseData);
-    return { success: true, data: response.data };
+    const response = await apiClient.put(`/compat/courses/${courseId}`, {
+      course_name: courseData.course_name,
+    });
+    return { success: true, data: mapCourse(response.data?.data || {}) };
   } catch (error) {
     return {
       success: false,
@@ -65,8 +76,8 @@ export const updateCourse = async (courseId, courseData) => {
  */
 export const deleteCourse = async (courseId) => {
   try {
-    const response = await apiClient.delete(`/courses/${courseId}`);
-    return { success: true, data: response.data };
+    const response = await apiClient.delete(`/compat/courses/${courseId}`);
+    return { success: true, data: response.data?.data };
   } catch (error) {
     return {
       success: false,
@@ -80,8 +91,11 @@ export const deleteCourse = async (courseId) => {
  */
 export const getCourseSections = async (courseId) => {
   try {
-    const response = await apiClient.get(`/courses/${courseId}/sections`);
-    return { success: true, data: response.data };
+    const response = await apiClient.get(`/compat/courses/${courseId}/sections`);
+    return {
+      success: true,
+      data: response.data?.data || [],
+    };
   } catch (error) {
     return {
       success: false,

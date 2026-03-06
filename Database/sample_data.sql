@@ -4,6 +4,26 @@
 
 USE attendance_management_system;
 
+SET @stmt := IF((SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'student' AND column_name = 'email') = 0,
+	'ALTER TABLE student ADD COLUMN email VARCHAR(255) NULL', 'SELECT 1');
+PREPARE s1 FROM @stmt; EXECUTE s1; DEALLOCATE PREPARE s1;
+
+SET @stmt := IF((SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'student' AND column_name = 'password_hash') = 0,
+	'ALTER TABLE student ADD COLUMN password_hash VARCHAR(255) NULL', 'SELECT 1');
+PREPARE s2 FROM @stmt; EXECUTE s2; DEALLOCATE PREPARE s2;
+
+SET @stmt := IF((SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'student' AND column_name = 'is_active') = 0,
+	'ALTER TABLE student ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT TRUE', 'SELECT 1');
+PREPARE s3 FROM @stmt; EXECUTE s3; DEALLOCATE PREPARE s3;
+
+SET @stmt := IF((SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'faculty' AND column_name = 'password_hash') = 0,
+	'ALTER TABLE faculty ADD COLUMN password_hash VARCHAR(255) NULL', 'SELECT 1');
+PREPARE f1 FROM @stmt; EXECUTE f1; DEALLOCATE PREPARE f1;
+
+SET @stmt := IF((SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'faculty' AND column_name = 'is_active') = 0,
+	'ALTER TABLE faculty ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT TRUE', 'SELECT 1');
+PREPARE f2 FROM @stmt; EXECUTE f2; DEALLOCATE PREPARE f2;
+
 -- ===================================================================
 -- INSERT SAMPLE STUDENTS (Roll No Format: 23BCS083)
 -- ===================================================================
@@ -16,6 +36,10 @@ INSERT INTO STUDENT (roll_no, name, batch_year, department) VALUES
 ('24BCS091', 'Arjun Patel', 2024, 'Computer Science'),
 ('24BIT052', 'Neha Gupta', 2024, 'Information Technology'),
 ('24BCS092', 'Rohan Shah', 2024, 'Computer Science');
+
+UPDATE STUDENT
+SET email = CONCAT(LOWER(roll_no), '@nithams.local'),
+	password_hash = LOWER(SHA2(CONCAT('Stu@', roll_no), 256));
 
 -- ===================================================================
 -- INSERT SAMPLE COURSES (Course ID Format: CS-101, CS-211)
@@ -45,6 +69,10 @@ INSERT INTO FACULTY (faculty_id, name, email, department) VALUES
 ('23FAC002', 'Prof. Anjali Sharma', 'anjali.sharma@nith.ac.in', 'Computer Science'),
 ('23FAC003', 'Dr. Vikram Singh', 'vikram.singh@nith.ac.in', 'Information Technology'),
 ('23FAC004', 'Prof. Meera Patel', 'meera.patel@nith.ac.in', 'Computer Science');
+
+UPDATE FACULTY
+SET email = COALESCE(NULLIF(email, ''), CONCAT(LOWER(faculty_id), '@nithams.local')),
+	password_hash = LOWER(SHA2(CONCAT('Fac@', faculty_id), 256));
 
 -- ===================================================================
 -- INSERT SAMPLE ENROLLMENTS
