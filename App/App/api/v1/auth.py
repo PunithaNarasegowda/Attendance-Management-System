@@ -148,6 +148,8 @@ def _ensure_faculty_student_auth_columns(db: Session) -> None:
 
 
 def _get_admin_by_email(db: Session, email: str) -> dict | None:
+    if not _table_exists(db, "admin_users"):
+        return None
     row = db.execute(
         text(
             """
@@ -165,6 +167,9 @@ def _get_admin_by_email(db: Session, email: str) -> dict | None:
 def _get_faculty_by_email(db: Session, email: str) -> dict | None:
     if not _table_exists(db, "faculty"):
         return None
+    required_columns = ("faculty_id", "name", "email", "password_hash", "is_active")
+    if any(not _column_exists(db, "faculty", col) for col in required_columns):
+        return None
     row = db.execute(
         text(
             """
@@ -181,6 +186,9 @@ def _get_faculty_by_email(db: Session, email: str) -> dict | None:
 
 def _get_student_by_email(db: Session, email: str) -> dict | None:
     if not _table_exists(db, "student"):
+        return None
+    required_columns = ("roll_no", "name", "email", "password_hash", "is_active")
+    if any(not _column_exists(db, "student", col) for col in required_columns):
         return None
     row = db.execute(
         text(
@@ -207,14 +215,18 @@ def login(payload: dict, db: Session = Depends(get_db)):
             detail="Email and password are required",
         )
 
+    # In production, DB users may not have CREATE/ALTER privileges.
+    # Treat these schema bootstrap steps as best-effort so login can still work
+    # against already-initialized schemas.
     try:
         _ensure_admin_table(db)
+    except Exception:
+        db.rollback()
+
+    try:
         _ensure_faculty_student_auth_columns(db)
     except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Authentication service is unavailable",
-        )
+        db.rollback()
 
     admin = _get_admin_by_email(db, email)
     if admin and admin.get("is_active") and verify_password(password, admin["password_hash"]):
