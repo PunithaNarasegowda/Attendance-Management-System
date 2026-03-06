@@ -123,6 +123,13 @@ const AdminDashboard = () => {
                 <h3 className="font-semibold mb-1">Manage Courses</h3>
                 <p className="text-sm text-muted-foreground">Create and configure courses</p>
               </a>
+              <a
+                href="/admin/sections"
+                className="block p-4 bg-accent hover:bg-accent/80 rounded-lg transition-colors"
+              >
+                <h3 className="font-semibold mb-1">Manage Sections</h3>
+                <p className="text-sm text-muted-foreground">Create course sections used for student assignment</p>
+              </a>
             </div>
           </CardContent>
         </Card>

@@ -12,6 +12,7 @@ import AdminDashboard from './pages/Admin/AdminDashboard';
 import ManageStudents from './pages/Admin/ManageStudents';
 import ManageFaculty from './pages/Admin/ManageFaculty';
 import ManageCourses from './pages/Admin/ManageCourses';
+import ManageSections from './pages/Admin/ManageSections';
 
 // Faculty Pages
 import FacultyDashboard from './pages/Faculty/FacultyDashboard';
@@ -73,6 +74,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ManageCourses />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/sections"
+              element={
+                <ProtectedRoute>
+                  <ManageSections />
                 </ProtectedRoute>
               }
             />

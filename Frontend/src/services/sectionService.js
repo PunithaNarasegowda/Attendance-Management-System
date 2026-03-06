@@ -5,7 +5,15 @@ import apiClient from '../utils/apiClient';
  */
 export const getAllSections = async () => {
   try {
-    return { success: true, data: [] };
+    const response = await apiClient.get('/compat/sections');
+    return {
+      success: true,
+      data: (response.data?.data || []).map((section) => ({
+        section_id: section.section_id,
+        student_count: section.student_count,
+        lecture_count: section.lecture_count,
+      })),
+    };
   } catch (error) {
     return {
       success: false,
@@ -33,7 +41,10 @@ export const getSectionById = async (sectionId) => {
  */
 export const createSection = async (sectionData) => {
   try {
-    return { success: false, error: 'Section creation is not available in compatibility mode' };
+    const response = await apiClient.post('/compat/sections', {
+      section_id: sectionData.section_id,
+    });
+    return { success: true, data: response.data?.data };
   } catch (error) {
     return {
       success: false,
@@ -64,10 +75,8 @@ export const updateSection = async (sectionId, sectionData) => {
  */
 export const deleteSection = async (sectionId) => {
   try {
-    return {
-      success: false,
-      error: 'Section delete is not supported by this backend schema',
-    };
+    const response = await apiClient.delete(`/compat/sections/${sectionId}`);
+    return { success: true, data: response.data?.data };
   } catch (error) {
     return {
       success: false,
@@ -111,6 +120,54 @@ export const getCourseSections = async (courseId) => {
   }
 };
 
+/**
+ * Get all course-section mappings
+ */
+export const getAllCourseSectionMappings = async () => {
+  try {
+    const response = await apiClient.get('/compat/course-sections');
+    return { success: true, data: response.data?.data || [] };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.response?.data?.message || 'Failed to fetch course-section mappings',
+    };
+  }
+};
+
+/**
+ * Create course-section mapping
+ */
+export const createCourseSectionMapping = async (mappingData) => {
+  try {
+    const response = await apiClient.post('/compat/course-sections', {
+      course_id: mappingData.course_id,
+      section_id: mappingData.section_id,
+    });
+    return { success: true, data: response.data?.data };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.response?.data?.message || 'Failed to create course-section mapping',
+    };
+  }
+};
+
+/**
+ * Delete course-section mapping
+ */
+export const deleteCourseSectionMapping = async (courseId, sectionId) => {
+  try {
+    const response = await apiClient.delete(`/compat/course-sections/${courseId}/${sectionId}`);
+    return { success: true, data: response.data?.data };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.response?.data?.message || 'Failed to delete course-section mapping',
+    };
+  }
+};
+
 const sectionService = {
   getAllSections,
   getSectionById,
@@ -119,6 +176,9 @@ const sectionService = {
   deleteSection,
   getSectionStudents,
   getCourseSections,
+  getAllCourseSectionMappings,
+  createCourseSectionMapping,
+  deleteCourseSectionMapping,
 };
 
 export default sectionService;

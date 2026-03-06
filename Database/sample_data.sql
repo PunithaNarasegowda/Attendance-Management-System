@@ -53,13 +53,22 @@ INSERT INTO COURSE (course_id, course_name) VALUES
 -- ===================================================================
 -- INSERT SAMPLE SECTIONS (Section Format: CD-2, CS-2, CS-3, EC-2)
 -- ===================================================================
-INSERT INTO SECTION (section_name, course_id) VALUES
-('CD-2', 'CS-101'),
-('CS-2', 'CS-101'),
-('CD-3', 'CS-211'),
-('CS-3', 'CS-211'),
-('EC-2', 'CS-130'),
-('CD-2', 'CS-150');
+INSERT INTO SECTION (section_name) VALUES
+('CD-2'),
+('CS-2'),
+('CD-3'),
+('CS-3'),
+('EC-2'),
+('EC-3');
+
+-- ===================================================================
+-- INSERT COURSE-SECTION MAPPINGS
+-- ===================================================================
+INSERT INTO COURSE_SECTION (course_id, section_name) VALUES
+('CS-101', 'CD-2'), ('CS-101', 'CS-2'),
+('CS-211', 'CD-3'), ('CS-211', 'CS-3'),
+('CS-130', 'EC-2'), ('CS-130', 'EC-3'),
+('CS-150', 'CD-2');
 
 -- ===================================================================
 -- INSERT SAMPLE FACULTY (Faculty ID and name appropriate)
@@ -77,11 +86,11 @@ SET email = COALESCE(NULLIF(email, ''), CONCAT(LOWER(faculty_id), '@nithams.loca
 -- ===================================================================
 -- INSERT SAMPLE ENROLLMENTS
 -- ===================================================================
-INSERT INTO ENROLLS (roll_no, course_id) VALUES
-('23BCS083', 'CS-101'), ('23BCS084', 'CS-101'), ('23BIT045', 'CS-101'), ('23BCS085', 'CS-101'), ('23BIT046', 'CS-101'),
-('23BCS083', 'CS-211'), ('23BCS084', 'CS-211'), ('23BIT045', 'CS-211'), ('24BCS091', 'CS-211'), ('24BIT052', 'CS-211'),
-('23BCS083', 'CS-130'), ('23BCS085', 'CS-130'), ('23BIT046', 'CS-130'), ('24BCS091', 'CS-130'), ('24BCS092', 'CS-130'),
-('23BCS084', 'CS-150'), ('23BIT045', 'CS-150'), ('24BIT052', 'CS-150'), ('24BCS092', 'CS-150');
+INSERT INTO ENROLLS (roll_no, course_id, section_name) VALUES
+('23BCS083', 'CS-101', 'CD-2'), ('23BCS084', 'CS-101', 'CD-2'), ('23BIT045', 'CS-101', 'CS-2'), ('23BCS085', 'CS-101', 'CS-2'), ('23BIT046', 'CS-101', 'CD-2'),
+('23BCS083', 'CS-211', 'CD-3'), ('23BCS084', 'CS-211', 'CD-3'), ('23BIT045', 'CS-211', 'CS-3'), ('24BCS091', 'CS-211', 'CS-3'), ('24BIT052', 'CS-211', 'CD-3'),
+('23BCS083', 'CS-130', 'EC-2'), ('23BCS085', 'CS-130', 'EC-2'), ('23BIT046', 'CS-130', 'EC-2'), ('24BCS091', 'CS-130', 'EC-3'), ('24BCS092', 'CS-130', 'EC-3'),
+('23BCS084', 'CS-150', 'CD-2'), ('23BIT045', 'CS-150', 'CD-2'), ('24BIT052', 'CS-150', 'CD-2'), ('24BCS092', 'CS-150', 'CD-2');
 
 -- ===================================================================
 -- INSERT SAMPLE LECTURES

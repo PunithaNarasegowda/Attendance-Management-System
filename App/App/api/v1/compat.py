@@ -128,6 +128,75 @@ def _ensure_user_auth_columns(db: Session) -> None:
     db.commit()
 
 
+def _ensure_enrollment_section_column(db: Session) -> None:
+    if not _table_exists(db, "enrolls"):
+        return
+
+    if not _column_exists(db, "enrolls", "section_name"):
+        db.execute(text("ALTER TABLE enrolls ADD COLUMN section_name VARCHAR(10) NULL"))
+
+    db.execute(
+        text(
+            """
+            UPDATE enrolls e
+            SET e.section_name = COALESCE(
+                (SELECT MIN(s.section_name) FROM section s),
+                e.section_name
+            )
+            WHERE e.section_name IS NULL OR TRIM(e.section_name) = ''
+            """
+        )
+    )
+    db.commit()
+
+
+def _ensure_course_section_table(db: Session) -> None:
+    db.execute(
+        text(
+            """
+            CREATE TABLE IF NOT EXISTS course_section (
+                course_id VARCHAR(6) NOT NULL,
+                section_name VARCHAR(10) NOT NULL,
+                PRIMARY KEY (course_id, section_name),
+                CONSTRAINT fk_course_section_course
+                    FOREIGN KEY (course_id) REFERENCES course(course_id)
+                    ON DELETE CASCADE,
+                CONSTRAINT fk_course_section_section
+                    FOREIGN KEY (section_name) REFERENCES section(section_name)
+                    ON DELETE CASCADE
+            )
+            """
+        )
+    )
+
+    # Backfill mappings from current live usage.
+    db.execute(
+        text(
+            """
+            INSERT IGNORE INTO course_section (course_id, section_name)
+            SELECT DISTINCT e.course_id, e.section_name
+            FROM enrolls e
+            WHERE e.course_id IS NOT NULL
+              AND e.section_name IS NOT NULL
+              AND TRIM(e.section_name) <> ''
+            """
+        )
+    )
+    db.execute(
+        text(
+            """
+            INSERT IGNORE INTO course_section (course_id, section_name)
+            SELECT DISTINCT l.course_id, l.section_name
+            FROM lecture l
+            WHERE l.course_id IS NOT NULL
+              AND l.section_name IS NOT NULL
+              AND TRIM(l.section_name) <> ''
+            """
+        )
+    )
+    db.commit()
+
+
 @router.get("/courses", response_model=APIResponse)
 def list_courses(db: Session = Depends(get_db)):
     rows = _rows(db.execute(text("SELECT course_id, course_name FROM course ORDER BY course_id")))
@@ -176,23 +245,260 @@ def delete_course(course_id: str, db: Session = Depends(get_db)):
 
 @router.get("/courses/{course_id}/sections", response_model=APIResponse)
 def list_sections_by_course(course_id: str, db: Session = Depends(get_db)):
+    _ensure_enrollment_section_column(db)
+    _ensure_course_section_table(db)
     rows = _rows(
         db.execute(
             text(
                 """
                 SELECT
-                    s.section_name AS section_id,
-                    (SELECT COUNT(*) FROM enrolls e WHERE e.course_id = s.course_id) AS student_count,
-                    (SELECT COUNT(*) FROM lecture l WHERE l.course_id = s.course_id AND l.section_name = s.section_name) AS lecture_count
-                FROM section s
-                WHERE s.course_id = :course_id
-                ORDER BY s.section_name
+                    cs.section_name AS section_id,
+                    (
+                        SELECT COUNT(*)
+                        FROM enrolls e
+                        WHERE e.course_id = :course_id
+                          AND e.section_name = cs.section_name
+                    ) AS student_count,
+                    (
+                        SELECT COUNT(*)
+                        FROM lecture l
+                        WHERE l.course_id = :course_id
+                          AND l.section_name = cs.section_name
+                    ) AS lecture_count
+                FROM course_section cs
+                WHERE cs.course_id = :course_id
+                ORDER BY cs.section_name
                 """
             ),
             {"course_id": course_id},
         )
     )
     return APIResponse(message="Sections fetched", data=rows)
+
+
+@router.get("/sections", response_model=APIResponse)
+def list_sections(db: Session = Depends(get_db)):
+    _ensure_enrollment_section_column(db)
+    _ensure_course_section_table(db)
+    rows = _rows(
+        db.execute(
+            text(
+                """
+                SELECT
+                    s.section_name AS section_id,
+                    (
+                        SELECT COUNT(*)
+                        FROM enrolls e
+                        WHERE e.section_name = s.section_name
+                    ) AS student_count,
+                    (
+                        SELECT COUNT(*)
+                        FROM lecture l
+                        WHERE l.section_name = s.section_name
+                    ) AS lecture_count
+                FROM section s
+                ORDER BY s.section_name
+                """
+            )
+        )
+    )
+    return APIResponse(message="Sections fetched", data=rows)
+
+
+@router.get("/course-sections", response_model=APIResponse)
+def list_course_section_mappings(db: Session = Depends(get_db)):
+    _ensure_course_section_table(db)
+    rows = _rows(
+        db.execute(
+            text(
+                """
+                SELECT
+                    cs.course_id,
+                    c.course_name,
+                    cs.section_name AS section_id,
+                    (
+                        SELECT COUNT(*)
+                        FROM enrolls e
+                        WHERE e.course_id = cs.course_id
+                          AND e.section_name = cs.section_name
+                    ) AS student_count,
+                    (
+                        SELECT COUNT(*)
+                        FROM lecture l
+                        WHERE l.course_id = cs.course_id
+                          AND l.section_name = cs.section_name
+                    ) AS lecture_count
+                FROM course_section cs
+                JOIN course c ON c.course_id = cs.course_id
+                ORDER BY cs.course_id, cs.section_name
+                """
+            )
+        )
+    )
+    return APIResponse(message="Course-section mappings fetched", data=rows)
+
+
+@router.post("/course-sections", response_model=APIResponse, status_code=status.HTTP_201_CREATED)
+def create_course_section_mapping(payload: dict, db: Session = Depends(get_db)):
+    _ensure_course_section_table(db)
+    course_id = payload.get("course_id")
+    section_id = payload.get("section_id")
+    if not course_id or not section_id:
+        raise HTTPException(status_code=400, detail="course_id and section_id are required")
+
+    try:
+        db.execute(
+            text(
+                """
+                INSERT INTO course_section (course_id, section_name)
+                VALUES (:course_id, :section_id)
+                """
+            ),
+            {"course_id": course_id, "section_id": section_id},
+        )
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="Mapping already exists or references invalid course/section") from exc
+
+    return APIResponse(
+        message="Course-section mapping created",
+        data={"course_id": course_id, "section_id": section_id},
+    )
+
+
+@router.delete("/course-sections/{course_id}/{section_id}", response_model=APIResponse)
+def delete_course_section_mapping(course_id: str, section_id: str, db: Session = Depends(get_db)):
+    _ensure_course_section_table(db)
+    in_use = db.execute(
+        text(
+            """
+            SELECT
+                (
+                    SELECT COUNT(*)
+                    FROM lecture l
+                    WHERE l.course_id = :course_id
+                      AND l.section_name = :section_id
+                )
+                +
+                (
+                    SELECT COUNT(*)
+                    FROM enrolls e
+                    WHERE e.course_id = :course_id
+                      AND e.section_name = :section_id
+                ) AS usage_count
+            """
+        ),
+        {"course_id": course_id, "section_id": section_id},
+    ).scalar() or 0
+
+    if int(in_use) > 0:
+        raise HTTPException(
+            status_code=409,
+            detail="Cannot delete mapping that is used by enrollments or lectures",
+        )
+
+    result = db.execute(
+        text(
+            """
+            DELETE FROM course_section
+            WHERE course_id = :course_id AND section_name = :section_id
+            """
+        ),
+        {"course_id": course_id, "section_id": section_id},
+    )
+    db.commit()
+    if result.rowcount == 0:
+        raise HTTPException(status_code=404, detail="Course-section mapping not found")
+
+    return APIResponse(
+        message="Course-section mapping deleted",
+        data={"course_id": course_id, "section_id": section_id},
+    )
+
+
+@router.post("/sections", response_model=APIResponse, status_code=status.HTTP_201_CREATED)
+def create_section(payload: dict, db: Session = Depends(get_db)):
+    section_id = payload.get("section_id")
+    if not section_id:
+        raise HTTPException(status_code=400, detail="section_id is required")
+
+    try:
+        db.execute(
+            text(
+                """
+                INSERT INTO section (section_name)
+                VALUES (:section_id)
+                """
+            ),
+            {"section_id": section_id},
+        )
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="Section already exists") from exc
+
+    return APIResponse(message="Section created", data={"section_id": section_id})
+
+
+@router.delete("/sections/{section_id}", response_model=APIResponse)
+def delete_section(section_id: str, db: Session = Depends(get_db)):
+    _ensure_enrollment_section_column(db)
+    _ensure_course_section_table(db)
+
+    enrolled_count = db.execute(
+        text(
+            """
+            SELECT COUNT(*)
+            FROM enrolls
+            WHERE section_name = :section_id
+            """
+        ),
+        {"section_id": section_id},
+    ).scalar() or 0
+    if enrolled_count > 0:
+        raise HTTPException(status_code=409, detail="Cannot delete section with assigned students")
+
+    lecture_count = db.execute(
+        text(
+            """
+            SELECT COUNT(*)
+            FROM lecture
+            WHERE section_name = :section_id
+            """
+        ),
+        {"section_id": section_id},
+    ).scalar() or 0
+    if lecture_count > 0:
+        raise HTTPException(status_code=409, detail="Cannot delete section with assigned lectures")
+
+    mapped_count = db.execute(
+        text(
+            """
+            SELECT COUNT(*)
+            FROM course_section
+            WHERE section_name = :section_id
+            """
+        ),
+        {"section_id": section_id},
+    ).scalar() or 0
+    if mapped_count > 0:
+        raise HTTPException(status_code=409, detail="Cannot delete section mapped to courses")
+
+    result = db.execute(
+        text(
+            """
+            DELETE FROM section
+                        WHERE section_name = :section_id
+            """
+        ),
+                {"section_id": section_id},
+    )
+    db.commit()
+    if result.rowcount == 0:
+        raise HTTPException(status_code=404, detail="Section not found")
+
+    return APIResponse(message="Section deleted", data={"section_id": section_id})
 
 
 @router.get("/faculty", response_model=APIResponse)
@@ -306,6 +612,7 @@ def delete_faculty(faculty_id: str, db: Session = Depends(get_db)):
 
 @router.get("/faculty/{faculty_id}/courses", response_model=APIResponse)
 def faculty_courses(faculty_id: str, db: Session = Depends(get_db)):
+    _ensure_enrollment_section_column(db)
     rows = _rows(
         db.execute(
             text(
@@ -314,8 +621,22 @@ def faculty_courses(faculty_id: str, db: Session = Depends(get_db)):
                     l.course_id,
                     c.course_name,
                     l.section_name AS section_id,
-                    COALESCE((SELECT MAX(s.batch_year) FROM student s JOIN enrolls e ON e.roll_no = s.roll_no WHERE e.course_id = l.course_id), 'Unknown') AS batch_year,
-                    (SELECT COUNT(*) FROM enrolls e WHERE e.course_id = l.course_id) AS student_count,
+                    COALESCE(
+                        (
+                            SELECT MAX(s.batch_year)
+                            FROM student s
+                            JOIN enrolls e ON e.roll_no = s.roll_no
+                            WHERE e.course_id = l.course_id
+                              AND e.section_name = l.section_name
+                        ),
+                        'Unknown'
+                    ) AS batch_year,
+                    (
+                        SELECT COUNT(*)
+                        FROM enrolls e
+                        WHERE e.course_id = l.course_id
+                          AND e.section_name = l.section_name
+                    ) AS student_count,
                     COUNT(*) AS lecture_count
                 FROM lecture l
                 JOIN course c ON c.course_id = l.course_id
@@ -332,6 +653,7 @@ def faculty_courses(faculty_id: str, db: Session = Depends(get_db)):
 
 @router.post("/faculty/{faculty_id}/assign", response_model=APIResponse, status_code=status.HTTP_201_CREATED)
 def assign_faculty_to_course(faculty_id: str, payload: dict, db: Session = Depends(get_db)):
+    _ensure_course_section_table(db)
     course_id = payload.get("course_id")
     section_id = payload.get("section_id")
     if not course_id or not section_id:
@@ -356,14 +678,28 @@ def assign_faculty_to_course(faculty_id: str, payload: dict, db: Session = Depen
             """
             SELECT 1
             FROM section
+            WHERE section_name = :section_id
+            LIMIT 1
+            """
+        ),
+        {"section_id": section_id},
+    ).first()
+    if not section_exists:
+        raise HTTPException(status_code=404, detail="Section not found")
+
+    mapping_exists = db.execute(
+        text(
+            """
+            SELECT 1
+            FROM course_section
             WHERE course_id = :course_id AND section_name = :section_id
             LIMIT 1
             """
         ),
         {"course_id": course_id, "section_id": section_id},
     ).first()
-    if not section_exists:
-        raise HTTPException(status_code=404, detail="Section not found for the selected course")
+    if not mapping_exists:
+        raise HTTPException(status_code=409, detail="Section is not mapped to this course")
 
     existing = db.execute(
         text(
@@ -519,12 +855,15 @@ def delete_student(roll_no: str, db: Session = Depends(get_db)):
 
 @router.get("/students/{roll_no}/courses", response_model=APIResponse)
 def student_courses(roll_no: str, db: Session = Depends(get_db)):
+    _ensure_enrollment_section_column(db)
     rows = _rows(
         db.execute(
             text(
                 """
-                SELECT e.course_id, c.course_name,
-                       COALESCE((SELECT MIN(s.section_name) FROM section s WHERE s.course_id = e.course_id), 'A') AS section_id
+                SELECT
+                    e.course_id,
+                    c.course_name,
+                    COALESCE(e.section_name, (SELECT MIN(s.section_name) FROM section s), 'A') AS section_id
                 FROM enrolls e
                 JOIN course c ON c.course_id = e.course_id
                 WHERE e.roll_no = :roll_no
@@ -539,9 +878,12 @@ def student_courses(roll_no: str, db: Session = Depends(get_db)):
 
 @router.post("/students/{roll_no}/enroll", response_model=APIResponse, status_code=status.HTTP_201_CREATED)
 def enroll_student(roll_no: str, payload: dict, db: Session = Depends(get_db)):
+    _ensure_enrollment_section_column(db)
+    _ensure_course_section_table(db)
     course_id = payload.get("course_id")
-    if not course_id:
-        raise HTTPException(status_code=400, detail="course_id is required")
+    section_id = payload.get("section_id")
+    if not course_id or not section_id:
+        raise HTTPException(status_code=400, detail="course_id and section_id are required")
 
     student_exists = db.execute(
         text("SELECT 1 FROM student WHERE roll_no = :roll_no LIMIT 1"),
@@ -557,28 +899,75 @@ def enroll_student(roll_no: str, payload: dict, db: Session = Depends(get_db)):
     if not course_exists:
         raise HTTPException(status_code=404, detail="Course not found")
 
+    section_exists = db.execute(
+        text(
+            """
+            SELECT 1
+            FROM section
+            WHERE section_name = :section_id
+            LIMIT 1
+            """
+        ),
+        {"section_id": section_id},
+    ).first()
+    if not section_exists:
+        raise HTTPException(status_code=404, detail="Section not found")
+
+    mapping_exists = db.execute(
+        text(
+            """
+            SELECT 1
+            FROM course_section
+            WHERE course_id = :course_id AND section_name = :section_id
+            LIMIT 1
+            """
+        ),
+        {"course_id": course_id, "section_id": section_id},
+    ).first()
+    if not mapping_exists:
+        raise HTTPException(status_code=409, detail="Section is not mapped to this course")
+
     existing = db.execute(
         text("SELECT 1 FROM enrolls WHERE roll_no = :roll_no AND course_id = :course_id LIMIT 1"),
         {"roll_no": roll_no, "course_id": course_id},
     ).first()
-    if existing:
-        raise HTTPException(status_code=409, detail="Student is already enrolled in this course")
 
     try:
-        db.execute(
-            text("INSERT INTO enrolls (roll_no, course_id) VALUES (:roll_no, :course_id)"),
-            {"roll_no": roll_no, "course_id": course_id},
-        )
+        if existing:
+            db.execute(
+                text(
+                    """
+                    UPDATE enrolls
+                    SET section_name = :section_id
+                    WHERE roll_no = :roll_no AND course_id = :course_id
+                    """
+                ),
+                {"roll_no": roll_no, "course_id": course_id, "section_id": section_id},
+            )
+        else:
+            db.execute(
+                text(
+                    """
+                    INSERT INTO enrolls (roll_no, course_id, section_name)
+                    VALUES (:roll_no, :course_id, :section_id)
+                    """
+                ),
+                {"roll_no": roll_no, "course_id": course_id, "section_id": section_id},
+            )
         db.commit()
     except IntegrityError as exc:
         db.rollback()
-        raise HTTPException(status_code=409, detail="Could not enroll student in course") from exc
+        raise HTTPException(status_code=409, detail="Could not assign student to section") from exc
 
-    return APIResponse(message="Student enrolled", data={"roll_no": roll_no, "course_id": course_id})
+    return APIResponse(
+        message="Student assigned to section",
+        data={"roll_no": roll_no, "course_id": course_id, "section_id": section_id},
+    )
 
 
 @router.get("/sections/{course_id}/{section_id}/students", response_model=APIResponse)
 def section_students(course_id: str, section_id: str, db: Session = Depends(get_db)):
+    _ensure_enrollment_section_column(db)
     rows = _rows(
         db.execute(
             text(
@@ -587,10 +976,11 @@ def section_students(course_id: str, section_id: str, db: Session = Depends(get_
                 FROM student s
                 JOIN enrolls e ON e.roll_no = s.roll_no
                 WHERE e.course_id = :course_id
+                  AND e.section_name = :section_id
                 ORDER BY s.roll_no
                 """
             ),
-            {"course_id": course_id},
+            {"course_id": course_id, "section_id": section_id},
         )
     )
     return APIResponse(message="Section students fetched", data=rows)

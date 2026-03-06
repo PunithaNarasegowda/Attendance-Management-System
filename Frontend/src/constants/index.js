@@ -48,3 +48,16 @@ export const STORAGE_KEYS = {
   USER: 'user_data',
   REFRESH_TOKEN: 'refresh_token',
 };
+
+// Supported departments
+export const DEPARTMENTS = [
+  { value: 'CSE', label: 'Computer Science and Engineering (CSE)' },
+  { value: 'ECE', label: 'Electronics and Communication Engineering (ECE)' },
+  { value: 'EE', label: 'Electrical Engineering (EE)' },
+  { value: 'ME', label: 'Mechanical Engineering (ME)' },
+  { value: 'CE', label: 'Civil Engineering (CE)' },
+  { value: 'CHE', label: 'Chemical Engineering (CHE)' },
+  { value: 'MATH', label: 'Mathematics' },
+  { value: 'PHY', label: 'Physics' },
+  { value: 'HUM', label: 'Humanities and Social Sciences' },
+];

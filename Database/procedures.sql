@@ -9,22 +9,26 @@ DELIMITER //
 -- Procedure to enroll a student in a course
 CREATE PROCEDURE sp_EnrollStudent(
     IN p_roll_no VARCHAR(8),
-    IN p_course_id VARCHAR(6)
+    IN p_course_id VARCHAR(6),
+    IN p_section_name VARCHAR(4)
 )
 BEGIN
-    INSERT INTO ENROLLS (roll_no, course_id)
-    VALUES (p_roll_no, p_course_id);
+    INSERT INTO ENROLLS (roll_no, course_id, section_name)
+    VALUES (p_roll_no, p_course_id, p_section_name)
+    ON DUPLICATE KEY UPDATE section_name = VALUES(section_name);
 END //
 
 -- Procedure to get all students enrolled in a specific course
 CREATE PROCEDURE sp_GetStudentsByCourse(
-    IN p_course_id VARCHAR(6)
+    IN p_course_id VARCHAR(6),
+    IN p_section_name VARCHAR(4)
 )
 BEGIN
     SELECT s.roll_no, s.name, s.batch_year, s.department
     FROM STUDENT s
     INNER JOIN ENROLLS e ON s.roll_no = e.roll_no
     WHERE e.course_id = p_course_id
+      AND e.section_name = p_section_name
     ORDER BY s.roll_no;
 END //
 
@@ -33,7 +37,7 @@ CREATE PROCEDURE sp_GetCoursesByStudent(
     IN p_roll_no VARCHAR(8)
 )
 BEGIN
-    SELECT c.course_id, c.course_name
+    SELECT c.course_id, c.course_name, e.section_name
     FROM COURSE c
     INNER JOIN ENROLLS e ON c.course_id = e.course_id
     WHERE e.roll_no = p_roll_no
@@ -231,12 +235,11 @@ END //
 
 -- Procedure to create a new section
 CREATE PROCEDURE sp_CreateSection(
-    IN p_section_name VARCHAR(4),
-    IN p_course_id VARCHAR(6)
+    IN p_section_name VARCHAR(10)
 )
 BEGIN
-    INSERT INTO SECTION (section_name, course_id)
-    VALUES (p_section_name, p_course_id);
+    INSERT INTO SECTION (section_name)
+    VALUES (p_section_name);
 END //
 
 -- Procedure to get all sections for a course
@@ -244,9 +247,8 @@ CREATE PROCEDURE sp_GetSectionsByCourse(
     IN p_course_id VARCHAR(6)
 )
 BEGIN
-    SELECT section_name, course_id
+    SELECT DISTINCT section_name
     FROM SECTION
-    WHERE course_id = p_course_id
     ORDER BY section_name;
 END //
 

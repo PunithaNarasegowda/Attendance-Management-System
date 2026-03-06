@@ -10,6 +10,7 @@ import Alert from '../../components/Alert';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import studentService from '../../services/studentService';
 import courseService from '../../services/courseService';
+import { DEPARTMENTS } from '../../constants';
 
 const ManageStudents = () => {
   const [students, setStudents] = useState([]);
@@ -20,6 +21,8 @@ const ManageStudents = () => {
   const [assigningStudent, setAssigningStudent] = useState(null);
   const [alert, setAlert] = useState(null);
   const [courses, setCourses] = useState([]);
+  const [sections, setSections] = useState([]);
+  const [selectedBatchYear, setSelectedBatchYear] = useState('all');
   const [formData, setFormData] = useState({
     roll_no: '',
     name: '',
@@ -29,6 +32,7 @@ const ManageStudents = () => {
     department: '',
   });
   const [assignCourseId, setAssignCourseId] = useState('');
+  const [assignSectionId, setAssignSectionId] = useState('');
 
   useEffect(() => {
     loadStudents();
@@ -50,6 +54,20 @@ const ManageStudents = () => {
     const result = await courseService.getAllCourses();
     if (result.success) {
       setCourses(result.data);
+    }
+  };
+
+  const loadSections = async (courseId) => {
+    if (!courseId) {
+      setSections([]);
+      return;
+    }
+    const result = await courseService.getCourseSections(courseId);
+    if (result.success) {
+      setSections(result.data);
+    } else {
+      setSections([]);
+      setAlert({ type: 'error', message: result.error });
     }
   };
 
@@ -100,19 +118,33 @@ const ManageStudents = () => {
   const handleOpenAssignModal = (student) => {
     setAssigningStudent(student);
     setAssignCourseId('');
+    setAssignSectionId('');
+    setSections([]);
     setShowAssignModal(true);
+  };
+
+  const handleAssignCourseChange = async (courseId) => {
+    setAssignCourseId(courseId);
+    setAssignSectionId('');
+    await loadSections(courseId);
   };
 
   const handleAssignCourse = async (e) => {
     e.preventDefault();
     if (!assigningStudent) return;
 
-    const result = await studentService.enrollStudentInCourse(assigningStudent.roll_no, assignCourseId);
+    const result = await studentService.enrollStudentInCourse(
+      assigningStudent.roll_no,
+      assignCourseId,
+      assignSectionId,
+    );
     if (result.success) {
-      setAlert({ type: 'success', message: 'Student assigned to course successfully.' });
+      setAlert({ type: 'success', message: 'Student assigned to section successfully.' });
       setShowAssignModal(false);
       setAssigningStudent(null);
       setAssignCourseId('');
+      setAssignSectionId('');
+      setSections([]);
     } else {
       setAlert({ type: 'error', message: result.error });
     }
@@ -156,7 +188,7 @@ const ManageStudents = () => {
           <button
             onClick={() => handleOpenAssignModal(row)}
             className="text-green-600 hover:text-green-800"
-            title="Assign course"
+            title="Assign to section"
           >
             <Link size={18} />
           </button>
@@ -164,6 +196,22 @@ const ManageStudents = () => {
       ),
     },
   ];
+
+  const batchYearOptions = [
+    { value: 'all', label: 'All Batch Years' },
+    ...Array.from(new Set(students.map((student) => String(student.batch_year || 'Unassigned'))))
+      .sort((a, b) => {
+        if (a === 'Unassigned') return 1;
+        if (b === 'Unassigned') return -1;
+        return Number(b) - Number(a);
+      })
+      .map((year) => ({ value: year, label: `Batch ${year}` })),
+  ];
+
+  const filteredStudents =
+    selectedBatchYear === 'all'
+      ? students
+      : students.filter((student) => String(student.batch_year || 'Unassigned') === selectedBatchYear);
 
   if (loading) {
     return <LoadingSpinner size="lg" className="min-h-screen" />;
@@ -193,8 +241,27 @@ const ManageStudents = () => {
         />
       )}
 
+      <Card className="mb-4">
+        <Select
+          label="Filter by Batch Year"
+          id="batch_filter"
+          value={selectedBatchYear}
+          onChange={(e) => setSelectedBatchYear(e.target.value)}
+          options={batchYearOptions}
+          placeholder="Select batch year"
+        />
+      </Card>
+
       <Card>
-        <Table headers={headers} data={students} emptyMessage="No students found" />
+        <Table
+          headers={headers}
+          data={filteredStudents}
+          emptyMessage={
+            selectedBatchYear === 'all'
+              ? 'No students found'
+              : `No students found for batch ${selectedBatchYear}`
+          }
+        />
       </Card>
 
       <Modal
@@ -246,11 +313,13 @@ const ManageStudents = () => {
             onChange={(e) => setFormData({ ...formData, batch_year: e.target.value })}
             required
           />
-          <Input
+          <Select
             label="Department"
             id="department"
             value={formData.department}
             onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+            options={DEPARTMENTS}
+            placeholder="Select department"
             required
           />
           <div className="flex justify-end space-x-3 mt-6">
@@ -270,17 +339,30 @@ const ManageStudents = () => {
           setShowAssignModal(false);
           setAssigningStudent(null);
           setAssignCourseId('');
+          setAssignSectionId('');
+          setSections([]);
         }}
-        title={assigningStudent ? `Assign Course to ${assigningStudent.name}` : 'Assign Course'}
+        title={assigningStudent ? `Assign Section to ${assigningStudent.name}` : 'Assign Section'}
       >
         <form onSubmit={handleAssignCourse}>
           <Select
             label="Course"
             id="assign_course_id"
             value={assignCourseId}
-            onChange={(e) => setAssignCourseId(e.target.value)}
+            onChange={(e) => handleAssignCourseChange(e.target.value)}
             options={courses.map((course) => ({ value: course.course_id, label: `${course.course_id} - ${course.course_name}` }))}
             placeholder="Select a course"
+            required
+          />
+
+          <Select
+            label="Section"
+            id="assign_section_id"
+            value={assignSectionId}
+            onChange={(e) => setAssignSectionId(e.target.value)}
+            options={sections.map((section) => ({ value: section.section_id, label: section.section_id }))}
+            placeholder={assignCourseId ? 'Select a section' : 'Select a course first'}
+            disabled={!assignCourseId}
             required
           />
 
@@ -292,6 +374,8 @@ const ManageStudents = () => {
                 setShowAssignModal(false);
                 setAssigningStudent(null);
                 setAssignCourseId('');
+                setAssignSectionId('');
+                setSections([]);
               }}
             >
               Cancel

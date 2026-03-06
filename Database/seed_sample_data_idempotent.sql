@@ -57,13 +57,22 @@ ON DUPLICATE KEY UPDATE
 course_name = VALUES(course_name);
 
 -- Sections
-INSERT INTO SECTION (section_name, course_id) VALUES
-('CD-2', 'CS-101'),
-('CS-2', 'CS-101'),
-('CD-3', 'CS-211'),
-('CS-3', 'CS-211'),
-('EC-2', 'CS-130'),
-('CD-2', 'CS-150')
+INSERT INTO SECTION (section_name) VALUES
+('CD-2'),
+('CS-2'),
+('CD-3'),
+('CS-3'),
+('EC-2'),
+('EC-3')
+ON DUPLICATE KEY UPDATE
+section_name = VALUES(section_name);
+
+-- Course-section mappings
+INSERT INTO COURSE_SECTION (course_id, section_name) VALUES
+('CS-101', 'CD-2'), ('CS-101', 'CS-2'),
+('CS-211', 'CD-3'), ('CS-211', 'CS-3'),
+('CS-130', 'EC-2'), ('CS-130', 'EC-3'),
+('CS-150', 'CD-2')
 ON DUPLICATE KEY UPDATE
 section_name = VALUES(section_name);
 
@@ -87,13 +96,13 @@ SET password_hash = LOWER(SHA2(CONCAT('Fac@', faculty_id), 256))
 WHERE password_hash IS NULL OR TRIM(password_hash) = '';
 
 -- Enrollments
-INSERT INTO ENROLLS (roll_no, course_id) VALUES
-('23BCS083', 'CS-101'), ('23BCS084', 'CS-101'), ('23BIT045', 'CS-101'), ('23BCS085', 'CS-101'), ('23BIT046', 'CS-101'),
-('23BCS083', 'CS-211'), ('23BCS084', 'CS-211'), ('23BIT045', 'CS-211'), ('24BCS091', 'CS-211'), ('24BIT052', 'CS-211'),
-('23BCS083', 'CS-130'), ('23BCS085', 'CS-130'), ('23BIT046', 'CS-130'), ('24BCS091', 'CS-130'), ('24BCS092', 'CS-130'),
-('23BCS084', 'CS-150'), ('23BIT045', 'CS-150'), ('24BIT052', 'CS-150'), ('24BCS092', 'CS-150')
+INSERT INTO ENROLLS (roll_no, course_id, section_name) VALUES
+('23BCS083', 'CS-101', 'CD-2'), ('23BCS084', 'CS-101', 'CD-2'), ('23BIT045', 'CS-101', 'CS-2'), ('23BCS085', 'CS-101', 'CS-2'), ('23BIT046', 'CS-101', 'CD-2'),
+('23BCS083', 'CS-211', 'CD-3'), ('23BCS084', 'CS-211', 'CD-3'), ('23BIT045', 'CS-211', 'CS-3'), ('24BCS091', 'CS-211', 'CS-3'), ('24BIT052', 'CS-211', 'CD-3'),
+('23BCS083', 'CS-130', 'EC-2'), ('23BCS085', 'CS-130', 'EC-2'), ('23BIT046', 'CS-130', 'EC-2'), ('24BCS091', 'CS-130', 'EC-3'), ('24BCS092', 'CS-130', 'EC-3'),
+('23BCS084', 'CS-150', 'CD-2'), ('23BIT045', 'CS-150', 'CD-2'), ('24BIT052', 'CS-150', 'CD-2'), ('24BCS092', 'CS-150', 'CD-2')
 ON DUPLICATE KEY UPDATE
-roll_no = VALUES(roll_no);
+section_name = VALUES(section_name);
 
 -- Lectures
 INSERT INTO LECTURE (lecture_id, lecture_date, status, course_id, section_name, faculty_id) VALUES

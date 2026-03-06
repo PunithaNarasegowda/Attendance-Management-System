@@ -10,6 +10,7 @@ import Alert from '../../components/Alert';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import facultyService from '../../services/facultyService';
 import courseService from '../../services/courseService';
+import { DEPARTMENTS } from '../../constants';
 
 const ManageFaculty = () => {
   const [faculty, setFaculty] = useState([]);
@@ -263,11 +264,13 @@ const ManageFaculty = () => {
               placeholder="Auto-generated if empty"
             />
           )}
-          <Input
+          <Select
             label="Department"
             id="department"
             value={formData.department}
             onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+            options={DEPARTMENTS}
+            placeholder="Select department"
             required
           />
           <div className="flex justify-end space-x-3 mt-6">

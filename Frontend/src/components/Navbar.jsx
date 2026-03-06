@@ -47,6 +47,7 @@ const Navbar = () => {
       { to: '/admin/faculty', label: 'Faculty' },
       { to: '/admin/students', label: 'Students' },
       { to: '/admin/courses', label: 'Courses' },
+      { to: '/admin/sections', label: 'Sections' },
     ];
   };
 
