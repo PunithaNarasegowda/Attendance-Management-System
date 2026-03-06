@@ -1,43 +1,44 @@
 from collections.abc import Generator
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
-from App.core.config import settings 
 import os
 import tempfile
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, Session
+
+from App.core.config import settings
 
 if not settings.DATABASE_URL:
     raise ValueError("DATABASE_URL is required. Configure MySQL connection in .env.")
 
 ca_cert_content = os.getenv("MYSQL_CA_CERT")
+ca_file_env_path = os.getenv("MYSQL_SSL_CA_PATH")
+default_ca_path = "./ca.pem"
 
-# 2. Create a temporary file to hold the cert during runtime
+ca_path = None
 if ca_cert_content:
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pem") as temp_ca:
         temp_ca.write(ca_cert_content.encode("utf-8"))
         ca_path = temp_ca.name
-else:
-    # Fallback for local dev if file exists
-    ca_path = "./ca.pem"
+elif ca_file_env_path and os.path.exists(ca_file_env_path):
+    ca_path = ca_file_env_path
+elif os.path.exists(default_ca_path):
+    ca_path = default_ca_path
 
-# 3. Update the Connection String with the dynamic path
-# Note: Using 'ssl_ca' parameter for the pymysql driver
-connect_args = {
-    "ssl": {
-        "ca": ca_path
-    }
-}
+connect_args = {"ssl": {"ca": ca_path}} if ca_path else {}
 
-engine = create_engine(settings.DATABASE_URL,
-                       connect_args=connect_args,
-                       pool_pre_ping=True,
-                       echo=False)
+engine = create_engine(
+    settings.DATABASE_URL,
+    connect_args=connect_args,
+    pool_pre_ping=True,
+    echo=False,
+)
 
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine) 
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def get_db() -> Generator[Session, None, None]:
     db = SessionLocal()
     try:
-        yield db 
+        yield db
     finally:
         db.close()
