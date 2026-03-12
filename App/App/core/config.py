@@ -1,16 +1,13 @@
-import os
-from pydantic_settings import BaseSettings
-from dotenv import load_dotenv
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-load_dotenv()
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = os.getenv("PROJECT_NAME", "NIT Hamirpur AMS")
-    DATABASE_URL: str = os.getenv("DATABASE_URL")
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "dev-secret-key")
+    model_config = SettingsConfigDict(env_file=".env", case_sensitive=True, extra="ignore")
+
+    PROJECT_NAME: str = "Attendance Management System"
+    DATABASE_URL: str
+    SECRET_KEY: str = "dev-secret-key"
     ALGORITHM: str = "HS256"
-    
-    class Config:
-        case_sensitive = True
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
 settings = Settings()
