@@ -10,6 +10,7 @@ import Alert from '../../components/Alert';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import studentService from '../../services/studentService';
 import courseService from '../../services/courseService';
+import sectionService from '../../services/sectionService';
 import { DEPARTMENTS } from '../../constants';
 
 const ManageStudents = () => {
@@ -62,7 +63,7 @@ const ManageStudents = () => {
       setSections([]);
       return;
     }
-    const result = await courseService.getCourseSections(courseId);
+    const result = await sectionService.getAllSections();
     if (result.success) {
       setSections(result.data);
     } else {
