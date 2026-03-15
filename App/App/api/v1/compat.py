@@ -653,7 +653,6 @@ def faculty_courses(faculty_id: str, db: Session = Depends(get_db)):
 
 @router.post("/faculty/{faculty_id}/assign", response_model=APIResponse, status_code=status.HTTP_201_CREATED)
 def assign_faculty_to_course(faculty_id: str, payload: dict, db: Session = Depends(get_db)):
-    _ensure_course_section_table(db)
     course_id = payload.get("course_id")
     section_id = payload.get("section_id")
     if not course_id or not section_id:
@@ -686,20 +685,6 @@ def assign_faculty_to_course(faculty_id: str, payload: dict, db: Session = Depen
     ).first()
     if not section_exists:
         raise HTTPException(status_code=404, detail="Section not found")
-
-    mapping_exists = db.execute(
-        text(
-            """
-            SELECT 1
-            FROM course_section
-            WHERE course_id = :course_id AND section_name = :section_id
-            LIMIT 1
-            """
-        ),
-        {"course_id": course_id, "section_id": section_id},
-    ).first()
-    if not mapping_exists:
-        raise HTTPException(status_code=409, detail="Section is not mapped to this course")
 
     existing = db.execute(
         text(
@@ -879,7 +864,6 @@ def student_courses(roll_no: str, db: Session = Depends(get_db)):
 @router.post("/students/{roll_no}/enroll", response_model=APIResponse, status_code=status.HTTP_201_CREATED)
 def enroll_student(roll_no: str, payload: dict, db: Session = Depends(get_db)):
     _ensure_enrollment_section_column(db)
-    _ensure_course_section_table(db)
     course_id = payload.get("course_id")
     section_id = payload.get("section_id")
     if not course_id or not section_id:
@@ -912,20 +896,6 @@ def enroll_student(roll_no: str, payload: dict, db: Session = Depends(get_db)):
     ).first()
     if not section_exists:
         raise HTTPException(status_code=404, detail="Section not found")
-
-    mapping_exists = db.execute(
-        text(
-            """
-            SELECT 1
-            FROM course_section
-            WHERE course_id = :course_id AND section_name = :section_id
-            LIMIT 1
-            """
-        ),
-        {"course_id": course_id, "section_id": section_id},
-    ).first()
-    if not mapping_exists:
-        raise HTTPException(status_code=409, detail="Section is not mapped to this course")
 
     existing = db.execute(
         text("SELECT 1 FROM enrolls WHERE roll_no = :roll_no AND course_id = :course_id LIMIT 1"),

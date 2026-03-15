@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str = os.getenv("DATABASE_URL")
     SECRET_KEY: str = os.getenv("SECRET_KEY", "dev-secret-key")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    # CA_CERT_BASE64: str = os.getenv("CA_CERT_BASE64", "")
+    CA_CERT_BASE64: str = os.getenv("CA_CERT_BASE64", "")
     class Config:
         case_sensitive = True
 settings = Settings()
