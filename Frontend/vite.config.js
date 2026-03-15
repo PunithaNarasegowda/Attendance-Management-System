@@ -3,10 +3,8 @@ import path from 'path'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 
-
 export default defineConfig(({ mode }) => {
-  // 1. Load the env variables based on the current mode (dev/prod)
-  const env = loadEnv(mode, process.cwd(), '');
+  const env = loadEnv(mode, process.cwd(), '')
 
   return {
     plugins: [tailwindcss(), react()],
