@@ -34,7 +34,14 @@ export const ATTENDANCE_THRESHOLDS = {
 };
 
 // API Base URL
+<<<<<<< HEAD
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+=======
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  import.meta.env.VITE_BASE_API_URL ||
+  '/api/v1';
+>>>>>>> fadd85edaba66373918efe3dffe48cddb0fd7f67
 
 // File Upload Config
 export const FILE_UPLOAD = {
