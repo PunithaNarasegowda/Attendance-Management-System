@@ -35,7 +35,6 @@ export const ATTENDANCE_THRESHOLDS = {
 
 // API Base URL
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
-
 // File Upload Config
 export const FILE_UPLOAD = {
   MAX_SIZE: parseInt(import.meta.env.VITE_MAX_FILE_SIZE) || 5242880, // 5MB
