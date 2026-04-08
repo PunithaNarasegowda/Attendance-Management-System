@@ -7,14 +7,18 @@ from App.core.config import settings
 
 app = FastAPI(title=settings.PROJECT_NAME)
 
-FRONTEND_ORIGIN = "https://attendance-management-system-zzpz.vercel.app"
+ALLOWED_FRONTEND_ORIGINS = [
+    "https://attendance-management-system-zzpz.vercel.app",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
 
 class ApiOnlyCORSMiddleware:
     def __init__(self, app: ASGIApp) -> None:
         self.app = app
         self.cors_app = CORSMiddleware(
             app,
-            allow_origins=[FRONTEND_ORIGIN],
+            allow_origins=ALLOWED_FRONTEND_ORIGINS,
             allow_credentials=False,
             allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             allow_headers=["Content-Type", "Authorization"],

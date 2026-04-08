@@ -5,6 +5,8 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 import studentService from '../../services/studentService';
 import facultyService from '../../services/facultyService';
 import courseService from '../../services/courseService';
+import PageHeader from '../../components/PageHeader';
+import { Link } from 'react-router-dom';
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
@@ -47,47 +49,50 @@ const AdminDashboard = () => {
       title: 'Total Students',
       value: stats.totalStudents,
       icon: GraduationCap,
-      color: 'text-blue-600',
-      bg: 'bg-blue-50',
+      color: 'text-[color:var(--chart-1)]',
+      bg: 'bg-white/10',
     },
     {
       title: 'Total Faculty',
       value: stats.totalFaculty,
       icon: Users,
-      color: 'text-green-600',
-      bg: 'bg-green-50',
+      color: 'text-[color:var(--chart-2)]',
+      bg: 'bg-white/10',
     },
     {
       title: 'Total Courses',
       value: stats.totalCourses,
       icon: BookOpen,
-      color: 'text-purple-600',
-      bg: 'bg-purple-50',
+      color: 'text-[color:var(--chart-1)]',
+      bg: 'bg-white/10',
     },
     {
       title: 'Active Lectures',
       value: stats.activeLectures,
       icon: Calendar,
-      color: 'text-orange-600',
-      bg: 'bg-orange-50',
+      color: 'text-[color:var(--chart-2)]',
+      bg: 'bg-white/10',
     },
   ];
 
   return (
-    <div className="p-6">
-      <h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
+    <div className="space-y-6">
+      <PageHeader
+        title="Dashboard"
+        description="Overview of students, faculty, courses, and recent activity."
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {statCards.map((stat, index) => (
-          <Card key={index} className="hover:shadow-lg transition-shadow">
+          <Card key={index} className="hover:shadow-[var(--glass-shadow)] transition-shadow">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">{stat.title}</p>
-                  <p className="text-3xl font-bold">{stat.value}</p>
+                  <p className="text-3xl font-semibold tracking-tight">{stat.value}</p>
                 </div>
-                <div className={`${stat.bg} p-3 rounded-lg`}>
-                  <stat.icon className={stat.color} size={32} />
+                <div className={`${stat.bg} p-3 rounded-2xl border border-white/10`}>
+                  <stat.icon className={stat.color} size={28} />
                 </div>
               </div>
             </CardContent>
@@ -101,35 +106,35 @@ const AdminDashboard = () => {
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              <a
-                href="/admin/students"
-                className="block p-4 bg-accent hover:bg-accent/80 rounded-lg transition-colors"
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Link
+                to="/admin/students"
+                className="group block rounded-2xl border border-border bg-card/35 backdrop-blur p-4 hover:shadow-[var(--glow-mint)] transition-shadow"
               >
-                <h3 className="font-semibold mb-1">Manage Students</h3>
+                <h3 className="font-semibold tracking-tight mb-1 group-hover:text-foreground">Manage Students</h3>
                 <p className="text-sm text-muted-foreground">Enroll and manage student records</p>
-              </a>
-              <a
-                href="/admin/faculty"
-                className="block p-4 bg-accent hover:bg-accent/80 rounded-lg transition-colors"
+              </Link>
+              <Link
+                to="/admin/faculty"
+                className="group block rounded-2xl border border-border bg-card/35 backdrop-blur p-4 hover:shadow-[var(--glow-cyan)] transition-shadow"
               >
-                <h3 className="font-semibold mb-1">Manage Faculty</h3>
+                <h3 className="font-semibold tracking-tight mb-1 group-hover:text-foreground">Manage Faculty</h3>
                 <p className="text-sm text-muted-foreground">Add and assign faculty members</p>
-              </a>
-              <a
-                href="/admin/courses"
-                className="block p-4 bg-accent hover:bg-accent/80 rounded-lg transition-colors"
+              </Link>
+              <Link
+                to="/admin/courses"
+                className="group block rounded-2xl border border-border bg-card/35 backdrop-blur p-4 hover:shadow-[var(--glow-primary)] transition-shadow"
               >
-                <h3 className="font-semibold mb-1">Manage Courses</h3>
+                <h3 className="font-semibold tracking-tight mb-1 group-hover:text-foreground">Manage Courses</h3>
                 <p className="text-sm text-muted-foreground">Create and configure courses</p>
-              </a>
-              <a
-                href="/admin/sections"
-                className="block p-4 bg-accent hover:bg-accent/80 rounded-lg transition-colors"
+              </Link>
+              <Link
+                to="/admin/sections"
+                className="group block rounded-2xl border border-border bg-card/35 backdrop-blur p-4 hover:shadow-[var(--glow-primary)] transition-shadow"
               >
-                <h3 className="font-semibold mb-1">Manage Sections</h3>
-                <p className="text-sm text-muted-foreground">Create course sections used for student assignment</p>
-              </a>
+                <h3 className="font-semibold tracking-tight mb-1 group-hover:text-foreground">Manage Sections</h3>
+                <p className="text-sm text-muted-foreground">Create sections and course mappings</p>
+              </Link>
             </div>
           </CardContent>
         </Card>
