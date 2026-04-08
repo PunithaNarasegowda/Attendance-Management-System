@@ -243,14 +243,17 @@ const ManageStudents = () => {
       )}
 
       <Card className="mb-4">
-        <Select
-          label="Filter by Batch Year"
-          id="batch_filter"
-          value={selectedBatchYear}
-          onChange={(e) => setSelectedBatchYear(e.target.value)}
-          options={batchYearOptions}
-          placeholder="Select batch year"
-        />
+        <Card.Content className="pt-6">
+          <Select
+            label="Filter by Batch Year"
+            id="batch_filter"
+            value={selectedBatchYear}
+            onChange={(e) => setSelectedBatchYear(e.target.value)}
+            options={batchYearOptions}
+            placeholder="Select batch year"
+            className="mb-0"
+          />
+        </Card.Content>
       </Card>
 
       <Card>
