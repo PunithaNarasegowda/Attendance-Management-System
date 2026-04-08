@@ -7,7 +7,6 @@ import Modal from '../../components/Modal';
 import Input from '../../components/Input';
 import Alert from '../../components/Alert';
 import LoadingSpinner from '../../components/LoadingSpinner';
-import PageHeader from '../../components/PageHeader';
 import courseService from '../../services/courseService';
 
 const ManageCourses = () => {
@@ -95,13 +94,13 @@ const ManageCourses = () => {
         <div className="flex space-x-2">
           <button
             onClick={() => handleEdit(row)}
-            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+            className="text-blue-600 hover:text-blue-800"
           >
             <Edit size={18} />
           </button>
           <button
             onClick={() => handleDelete(row.course_id)}
-            className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+            className="text-red-600 hover:text-red-800"
           >
             <Trash2 size={18} />
           </button>
@@ -115,22 +114,19 @@ const ManageCourses = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Manage Courses"
-        description="Create and maintain course codes and names."
-        actions={
-          <Button
-            type="button"
-            onClick={() => setShowModal(true)}
-            variant="default"
-            className="flex items-center"
-          >
-            <Plus size={20} className="mr-2" />
-            Add Course
-          </Button>
-        }
-      />
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold text-gray-900">Manage Courses</h1>
+        <Button
+          type="button"
+          onClick={() => setShowModal(true)}
+          variant="primary"
+          className="flex items-center"
+        >
+          <Plus size={20} className="mr-2" />
+          Add Course
+        </Button>
+      </div>
 
       {alert && (
         <Alert
@@ -142,9 +138,7 @@ const ManageCourses = () => {
       )}
 
       <Card>
-        <Card.Content className="pt-6">
-          <Table headers={headers} data={courses} emptyMessage="No courses found" />
-        </Card.Content>
+        <Table headers={headers} data={courses} emptyMessage="No courses found" />
       </Card>
 
       <Modal

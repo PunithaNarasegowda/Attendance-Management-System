@@ -50,13 +50,34 @@ main {
   animation: fadeIn 0.4s ease-out;
 }
 
-/* Keep interactions consistent without global glow */
-:where(button, a, input, select, textarea) {
-  transition:
-    color 150ms ease-out,
-    background-color 150ms ease-out,
-    border-color 150ms ease-out,
-    box-shadow 150ms ease-out,
-    transform 150ms ease-out,
-    opacity 150ms ease-out;
+/* Smooth transitions for all interactive elements */
+button, a, input, select, textarea {
+  transition: all 0.2s ease-out;
+}
+
+/* Add hover glow effect for buttons */
+button:hover:not(:disabled) {
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+}
+
+.dark button:hover:not(:disabled) {
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.1);
+}
+
+/* Table row hover effect */
+tbody tr {
+  transition: background-color 0.2s ease-out;
+}
+
+tbody tr:hover {
+  background-color: var(--accent);
+}
+
+/* Input focus effect */
+input:focus, select:focus, textarea:focus {
+  box-shadow: 0 0 0 3px rgba(3, 2, 19, 0.1);
+}
+
+.dark input:focus, .dark select:focus, .dark textarea:focus {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
 }

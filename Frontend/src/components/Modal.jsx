@@ -34,7 +34,7 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
 
         {/* Modal */}
         <div
-          className={`relative z-50 inline-block w-full rounded-2xl text-left overflow-hidden transform transition-all ${sizeClasses[size]} glass-card`}
+          className={`relative z-50 inline-block w-full rounded-lg text-left overflow-hidden shadow-xl transform transition-all ${sizeClasses[size]} bg-card text-card-foreground border border-border`}
         >
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-border">

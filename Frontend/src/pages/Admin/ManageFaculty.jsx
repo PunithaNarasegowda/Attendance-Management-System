@@ -8,7 +8,6 @@ import Input from '../../components/Input';
 import Select from '../../components/Select';
 import Alert from '../../components/Alert';
 import LoadingSpinner from '../../components/LoadingSpinner';
-import PageHeader from '../../components/PageHeader';
 import facultyService from '../../services/facultyService';
 import courseService from '../../services/courseService';
 import sectionService from '../../services/sectionService';
@@ -200,22 +199,19 @@ const ManageFaculty = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Manage Faculty"
-        description="Add faculty, update details, and assign courses/sections."
-        actions={
-          <Button
-            type="button"
-            onClick={() => setShowModal(true)}
-            variant="default"
-            className="flex items-center"
-          >
-            <Plus size={20} className="mr-2" />
-            Add Faculty
-          </Button>
-        }
-      />
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold text-foreground">Manage Faculty</h1>
+        <Button
+          type="button"
+          onClick={() => setShowModal(true)}
+          variant="outline"
+          className="flex items-center border-[#1a237e] text-[#1a237e] hover:bg-[#1a237e]/10"
+        >
+          <Plus size={20} className="mr-2" />
+          Add Faculty
+        </Button>
+      </div>
 
       {alert && (
         <Alert
@@ -227,9 +223,7 @@ const ManageFaculty = () => {
       )}
 
       <Card>
-        <Card.Content className="pt-6">
-          <Table headers={headers} data={faculty} emptyMessage="No faculty found" />
-        </Card.Content>
+        <Table headers={headers} data={faculty} emptyMessage="No faculty found" />
       </Card>
 
       <Modal
