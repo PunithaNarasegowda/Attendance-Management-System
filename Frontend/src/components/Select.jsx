@@ -3,6 +3,7 @@ import Label from './Label';
 
 const Select = ({
   label,
+  labelClassName = '',
   id,
   value,
   onChange,
@@ -17,7 +18,7 @@ const Select = ({
   return (
     <div className="mb-4">
       {label && (
-        <Label htmlFor={id} className="mb-2">
+        <Label htmlFor={id} className={cn("mb-2", labelClassName)}>
           {label} {required && <span className="text-destructive">*</span>}
         </Label>
       )}
