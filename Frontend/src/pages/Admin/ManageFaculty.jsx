@@ -172,19 +172,19 @@ const ManageFaculty = () => {
         <div className="flex space-x-2">
           <button
             onClick={() => handleEdit(row)}
-            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+            className="text-blue-600 hover:text-blue-800"
           >
             <Edit size={18} />
           </button>
           <button
             onClick={() => handleDelete(row.faculty_id)}
-            className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+            className="text-red-600 hover:text-red-800"
           >
             <Trash2 size={18} />
           </button>
           <button
             onClick={() => handleOpenAssignModal(row)}
-            className="text-green-600 hover:text-green-800 dark:text-emerald-400 dark:hover:text-emerald-300"
+            className="text-green-600 hover:text-green-800"
             title="Assign course"
           >
             <Link size={18} />
@@ -201,7 +201,7 @@ const ManageFaculty = () => {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-foreground">Manage Faculty</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Manage Faculty</h1>
         <Button
           type="button"
           onClick={() => setShowModal(true)}
