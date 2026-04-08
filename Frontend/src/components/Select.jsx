@@ -17,7 +17,7 @@ const Select = ({
   return (
     <div className="mb-4">
       {label && (
-        <Label htmlFor={id} className="mb-1">
+        <Label htmlFor={id} className="mb-2">
           {label} {required && <span className="text-destructive">*</span>}
         </Label>
       )}
