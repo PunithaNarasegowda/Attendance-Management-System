@@ -8,6 +8,7 @@ import Input from '../../components/Input';
 import Select from '../../components/Select';
 import Alert from '../../components/Alert';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import PageHeader from '../../components/PageHeader';
 import studentService from '../../services/studentService';
 import courseService from '../../services/courseService';
 import sectionService from '../../services/sectionService';
@@ -176,19 +177,19 @@ const ManageStudents = () => {
         <div className="flex space-x-2">
           <button
             onClick={() => handleEdit(row)}
-            className="text-blue-600 hover:text-blue-800"
+            className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
           >
             <Edit size={18} />
           </button>
           <button
             onClick={() => handleDelete(row.roll_no)}
-            className="text-red-600 hover:text-red-800"
+            className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
           >
             <Trash2 size={18} />
           </button>
           <button
             onClick={() => handleOpenAssignModal(row)}
-            className="text-green-600 hover:text-green-800"
+            className="text-green-600 hover:text-green-800 dark:text-emerald-400 dark:hover:text-emerald-300"
             title="Assign to section"
           >
             <Link size={18} />
@@ -219,19 +220,22 @@ const ManageStudents = () => {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Manage Students</h1>
-        <Button
-          type="button"
-          onClick={() => setShowModal(true)}
-          variant="primary"
-          className="flex items-center"
-        >
-          <Plus size={20} className="mr-2" />
-          Add Student
-        </Button>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="Manage Students"
+        description="Create, edit, assign sections, and filter students by batch year."
+        actions={
+          <Button
+            type="button"
+            onClick={() => setShowModal(true)}
+            variant="primary"
+            className="flex items-center"
+          >
+            <Plus size={20} className="mr-2" />
+            Add Student
+          </Button>
+        }
+      />
 
       {alert && (
         <Alert
@@ -242,7 +246,8 @@ const ManageStudents = () => {
         />
       )}
 
-      <Card className="mb-4">
+      <Card>
+        <Card.Content className="pt-6">
         <Select
           label="Filter by Batch Year"
           id="batch_filter"
@@ -251,18 +256,21 @@ const ManageStudents = () => {
           options={batchYearOptions}
           placeholder="Select batch year"
         />
+        </Card.Content>
       </Card>
 
       <Card>
-        <Table
-          headers={headers}
-          data={filteredStudents}
-          emptyMessage={
-            selectedBatchYear === 'all'
-              ? 'No students found'
-              : `No students found for batch ${selectedBatchYear}`
-          }
-        />
+        <Card.Content className="pt-6">
+          <Table
+            headers={headers}
+            data={filteredStudents}
+            emptyMessage={
+              selectedBatchYear === 'all'
+                ? 'No students found'
+                : `No students found for batch ${selectedBatchYear}`
+            }
+          />
+        </Card.Content>
       </Card>
 
       <Modal
