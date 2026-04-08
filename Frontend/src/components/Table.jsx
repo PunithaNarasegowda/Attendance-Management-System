@@ -53,7 +53,7 @@ const TableRow = ({ className, ...props }) => {
     <tr
       data-slot="table-row"
       className={cn(
-        "hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors",
+        "hover:bg-accent/60 data-[state=selected]:bg-accent border-b border-border/60 transition-colors",
         className,
       )}
       {...props}

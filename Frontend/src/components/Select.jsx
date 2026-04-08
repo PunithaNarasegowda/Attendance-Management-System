@@ -29,7 +29,7 @@ const Select = ({
         required={required}
         data-slot="select"
         className={cn(
-          "flex h-9 w-full items-center justify-between rounded-md border border-input bg-input-background px-3 py-1 text-base transition-[color,box-shadow] outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+          "flex h-9 w-full items-center justify-between rounded-md border border-input bg-input-background text-foreground px-3 py-1 text-base transition-[color,box-shadow] outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm dark:bg-input/30 dark:text-foreground dark:[&>option]:bg-background dark:[&>option]:text-foreground",
           "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
           error ? "border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40" : "",
           className,
