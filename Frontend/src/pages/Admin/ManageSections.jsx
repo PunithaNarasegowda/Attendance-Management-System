@@ -8,7 +8,6 @@ import Input from '../../components/Input';
 import Select from '../../components/Select';
 import Alert from '../../components/Alert';
 import LoadingSpinner from '../../components/LoadingSpinner';
-import PageHeader from '../../components/PageHeader';
 import sectionService from '../../services/sectionService';
 import courseService from '../../services/courseService';
 
@@ -134,7 +133,7 @@ const ManageSections = () => {
       render: (row) => (
         <button
           onClick={() => handleDelete(row.section_id)}
-          className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+          className="text-red-600 hover:text-red-800"
           title="Delete section"
         >
           <Trash2 size={18} />
@@ -155,7 +154,7 @@ const ManageSections = () => {
       render: (row) => (
         <button
           onClick={() => handleDeleteMapping(row.course_id, row.section_id)}
-          className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+          className="text-red-600 hover:text-red-800"
           title="Delete mapping"
         >
           <Trash2 size={18} />
@@ -169,22 +168,19 @@ const ManageSections = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Manage Sections"
-        description="Create sections and map them to courses."
-        actions={
-          <Button
-            type="button"
-            onClick={() => setShowSectionModal(true)}
-            variant="primary"
-            className="flex items-center"
-          >
-            <Plus size={20} className="mr-2" />
-            Add Section
-          </Button>
-        }
-      />
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold text-gray-900">Manage Sections</h1>
+        <Button
+          type="button"
+          onClick={() => setShowSectionModal(true)}
+          variant="primary"
+          className="flex items-center"
+        >
+          <Plus size={20} className="mr-2" />
+          Add Section
+        </Button>
+      </div>
 
       {alert && (
         <Alert
@@ -196,31 +192,24 @@ const ManageSections = () => {
       )}
 
       <Card>
-        <Card.Content className="pt-6">
-          <Table headers={headers} data={sections} emptyMessage="No sections found" />
-        </Card.Content>
+        <Table headers={headers} data={sections} emptyMessage="No sections found" />
       </Card>
 
-      <PageHeader
-        title="Course-Section Mapping"
-        description="Link courses to sections for enrollment and assignment."
-        actions={
-          <Button
-            type="button"
-            onClick={() => setShowMappingModal(true)}
-            variant="outline"
-            className="flex items-center"
-          >
-            <Link size={18} className="mr-2" />
-            Map Course to Section
-          </Button>
-        }
-      />
+      <div className="flex justify-between items-center mt-8 mb-4">
+        <h2 className="text-2xl font-bold text-gray-900">Course-Section Mapping</h2>
+        <Button
+          type="button"
+          onClick={() => setShowMappingModal(true)}
+          variant="outline"
+          className="flex items-center"
+        >
+          <Link size={18} className="mr-2" />
+          Map Course to Section
+        </Button>
+      </div>
 
       <Card>
-        <Card.Content className="pt-6">
-          <Table headers={mappingHeaders} data={mappings} emptyMessage="No course-section mappings found" />
-        </Card.Content>
+        <Table headers={mappingHeaders} data={mappings} emptyMessage="No course-section mappings found" />
       </Card>
 
       <Modal isOpen={showSectionModal} onClose={handleCloseSectionModal} title="Add Section">
