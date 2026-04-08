@@ -28,6 +28,12 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response) {
+      console.error('API error', {
+        method: error.config?.method,
+        url: error.config?.baseURL ? `${error.config.baseURL}${error.config.url || ''}` : error.config?.url,
+        status: error.response.status,
+        data: error.response.data,
+      });
       // Handle specific error codes
       switch (error.response.status) {
         case 401:
@@ -49,6 +55,11 @@ apiClient.interceptors.response.use(
         default:
           console.error('An error occurred');
       }
+    } else {
+      console.error('API request failed', {
+        message: error.message,
+        url: error.config?.baseURL ? `${error.config.baseURL}${error.config.url || ''}` : error.config?.url,
+      });
     }
     return Promise.reject(error);
   }
