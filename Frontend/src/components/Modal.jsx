@@ -28,16 +28,16 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
       <div className="flex items-center justify-center min-h-screen px-4 py-8 text-center">
         {/* Backdrop */}
         <div
-          className="fixed inset-0 z-40 bg-black/60"
+          className="fixed inset-0 z-40 bg-black/70"
           onClick={onClose}
         ></div>
 
         {/* Modal */}
         <div
-          className={`relative z-50 inline-block w-full rounded-lg text-left overflow-hidden shadow-xl transform transition-all ${sizeClasses[size]} bg-card text-card-foreground border border-border`}
+          className={`relative z-50 inline-block w-full rounded-2xl text-left overflow-hidden shadow-xl transform transition-all ${sizeClasses[size]} glass-card bg-[color:var(--modal)] text-card-foreground border border-[color:var(--glass-border)] max-h-[85vh]`}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-[color:var(--border)]">
             <h3 className="text-lg font-semibold text-foreground">{title}</h3>
             <button
               onClick={onClose}
@@ -48,7 +48,7 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
           </div>
 
           {/* Content */}
-          <div className="px-6 py-4">{children}</div>
+          <div className="px-4 sm:px-6 py-4 overflow-y-auto">{children}</div>
         </div>
       </div>
     </div>
